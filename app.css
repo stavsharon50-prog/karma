@@ -35,6 +35,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 body.dark { background: var(--ink); color: var(--cream); }
+body.pink { background: var(--pink-soft); }
+body.hotpink { background: var(--pink); }
+body.lav { background: var(--lavender); }
 button, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 a { color: inherit; }

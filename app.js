@@ -123,6 +123,9 @@
     const m = (e && e.message) || '';
     const mod = m.match(/moderation:(\w+)/);
     if (mod) return MOD_MSG[mod[1]] || MOD_MSG.sexual;
+    if (m.includes('chain_expired')) return 'עברו 24 שעות והשרשרת נסגרה. אפשר לשלוח קארמה רגילה.';
+    if (m.includes('bad_date')) return 'התאריך לא תקין. בוחרים תאריך עתידי.';
+    if (m.includes('empty')) return 'צריך לכתוב משהו.';
     if (m.includes('cooldown')) return 'החבר הזה קיבל הרבה טינות בזמן האחרון. נותנים לו לנשום כמה ימים.';
     if (m.includes('slow_down')) return 'הגעת למקסימום הטינות להיום. מחר עוד יום.';
     if (m.includes('paused')) return 'כמה טינות שלך דווחו לאחרונה, אז פתיחת טינות חדשות מושהית לכמה ימים.';
@@ -159,6 +162,7 @@
   function render(html, opts) {
     opts = opts || {};
     document.body.classList.toggle('dark', !!opts.dark);
+    ['pink', 'hotpink', 'lav'].forEach((t) => document.body.classList.toggle(t, opts.theme === t));
     const demo = api.demo ? '<div class="demo-bar">מצב הדגמה · החברים כאן מדומים והנתונים נשמרים רק בטלפון הזה</div>' : '';
     $app.innerHTML = demo + `<main class="screen">${html}</main>` + (opts.after || '');
     window.scrollTo(0, 0);
@@ -267,7 +271,11 @@
   // Home
   async function screenHome() {
     loading();
-    const [count, onMe, mine] = await Promise.all([api.beefCount(), api.beefsForMe(), api.myBeefs(), loadFriends()]);
+    const [count, onMe, mine, bets, inbox] = await Promise.all([api.beefCount(), api.beefsForMe(), api.myBeefs(), api.myBets().catch(() => []), api.karmaInbox().catch(() => []), loadFriends()]);
+    const kSeen = store.get('karma_k_seen', []);
+    const freshK = inbox.find((k) => !kSeen.includes(k.id));
+    if (freshK && location.hash.replace('#/', '') === '') { go('karma/' + freshK.id); return; }
+    const betInvite = bets.find((b) => b.status === 'proposed' && b.awaiting_me);
     // A beef about me that I haven't seen yet → the "You've been KARMAd" moment.
     const seen = store.get('karma_seen', []);
     const fresh = onMe.find((b) => b.status === 'pending' && !seen.includes(b.id));
@@ -333,12 +341,9 @@
       </div>`;
 
     render(`
-      <header class="top">${logo()}
-        <div class="row" style="gap:8px">
-          <a class="icon-btn" href="#/friends" aria-label="חברים">${ICON.friends}</a>
-          <a class="icon-btn" href="#/profile" aria-label="פרופיל">${ICON.user}</a>
-        </div>
-      </header>
+      ${homeHeader()}
+      ${navTabs('beefs')}
+      ${betInvite ? `<a class="card lime row" href="#/bet/${esc(betInvite.id)}" style="text-decoration:none"><span class="display ltr" style="font-size:14px">VS</span><span style="flex:1"><b>${esc(betInvite.other_name)} ${G(betInvite.other_pronoun, 'זרקה', 'זרק', 'זרקו')} ${me('עלייך', 'עליך', 'עליכם')} כפפה</b><br><span class="small">${esc(betInvite.topic)}</span></span>${ICON.back.replace('M9 6l6 6-6 6', 'M15 6l-6 6 6 6')}</a>` : ''}
       ${needsMe.length ? `<a class="card lime row" href="#/mine/${esc(needsMe[0].id)}" style="text-decoration:none">
         <span style="font-size:22px">🔔</span><span style="flex:1"><b>${esc(needsMe[0].target_name)} ${needsMe[0].open_offer_from_target ? 'מנסה לסגור איתך חשבון' : 'רוצה לדעת שזה ממך'}</b><br><span class="small">${esc(needsMe[0].reason)}</span></span>${ICON.back.replace('M9 6l6 6-6 6', 'M15 6l-6 6 6 6')}</a>` : ''}
       ${hero}
@@ -660,7 +665,7 @@
         <button class="btn md white" data-copy>להעתיק לינק</button>
       </section>
       <div class="sec"><h2>החברים שלי</h2><span class="small">${friends.length}</span></div>
-      <div class="col">${friends.length ? friends.map((x) => `<div class="beef">${av(x.display_name, x.color)}<span class="body"><span class="reason">${esc(x.display_name)}</span></span>
+      <div class="col">${friends.length ? friends.map((x) => `<div class="beef">${av(x.display_name, x.color)}<a class="body" href="#/friend/${esc(x.id)}" style="text-decoration:none;color:inherit"><span class="reason">${esc(x.display_name)}</span><span class="meta">המאזן ביניכם ›</span></a>
         <button class="btn md" style="width:auto;min-height:38px;padding:0 12px;font-size:13px" data-beef="${esc(x.id)}">+ טינה</button></div>`).join('') : '<p class="muted small center">עוד אין. שולחים לינק לקבוצה ורואים מי נכנס ראשון.</p>'}</div>`);
     wireBack('');
     on('[data-wa]', 'click', () => api.log('invite_shared', { via: 'whatsapp' }));
@@ -729,6 +734,8 @@
       <div class="col">
         <a class="opt" href="#/archive" style="text-decoration:none"><span class="em">🫧</span><span class="t" style="flex:1">ארכיון שחררתי</span></a>
         <a class="opt" href="#/friends" style="text-decoration:none"><span class="em">👯</span><span class="t" style="flex:1">חברים והזמנות</span></a>
+        <a class="opt" href="#/wishlist" style="text-decoration:none"><span class="em">💝</span><span class="t" style="flex:1">מה משמח אותי</span></a>
+        <a class="opt" href="#/work" style="text-decoration:none"><span class="em">💼</span><span class="t" style="flex:1"><span class="ltr">KARMA. for Work</span> · שי לחג לעובדים</span></a>
       </div>
       <section class="card cream flat col small" style="gap:6px">
         <b>איך שומרים על זה כיף</b>
@@ -768,6 +775,687 @@
     on('[data-want]', 'click', (e) => { api.log('gifts_interest'); e.currentTarget.disabled = true; e.currentTarget.textContent = 'רשמנו! נעדכן ראשונים'; });
   }
 
+  // ═════════════════════════ Phase 2: bets & good karma ═════════════════════════
+
+  const STAKES = {
+    coffee: 'קפה ומאפה', apology: 'התנצלות דרמטית', song: 'שיר בהודעה קולית', next_time: 'בפעם הבאה עליי', custom: 'משהו אחר',
+  };
+  const stakeLabel = (b) => (b.stake === 'custom' && b.stake_text ? b.stake_text : STAKES[b.stake] || '');
+  const BET_CATS = { sport: 'ספורט', reality: 'ריאליטי', personal: 'אתגר אישי', free: 'חופשי' };
+  const BET_TEMPLATES = {
+    sport: ['מכבי לוקחת אליפות השנה', 'ישראל עולה למונדיאל', 'הפועל מנצחת בדרבי', 'מי לוקח את ה-NBA'],
+    reality: ['מי מנצח באח הגדול', 'הזוג הזה ייפרד לפני הגמר', 'מי עוזב השבוע'],
+    personal: ['חודש שלם בחדר כושר בלי לפספס', 'לא כותבים לאקס עד סוף החודש', 'מגיעים בזמן לארוחה הבאה', 'שבוע בלי סוכר'],
+    free: [],
+  };
+  const OCCASIONS = ['סתם כי התגעגעתי', 'תודה שהיית שם', 'מזל טוב', 'בהצלחה', 'רפואה שלמה', 'יום הולדת שמח', 'גאה בך'];
+  const COMPLIMENTS = [
+    ['הכי מצחיקה בקבוצה', 'הכי מצחיק בקבוצה', 'הכי מצחיקים בקבוצה'],
+    ['החברה הכי טובה שיש', 'החבר הכי טוב שיש', 'החברים הכי טובים שיש'],
+    ['תמיד יודעת מה להגיד', 'תמיד יודע מה להגיד', 'תמיד יודעים מה להגיד'],
+    ['יש לה את הצחוק הכי מדבק', 'יש לו את הצחוק הכי מדבק', 'יש להם את הצחוק הכי מדבק'],
+    ['הכי שווה לדבר איתה בשתיים בלילה', 'הכי שווה לדבר איתו בשתיים בלילה', 'הכי שווה לדבר איתם בשתיים בלילה'],
+  ];
+  const GIFTS = {
+    words: { t: 'רק מילים', s: 'בחינם' },
+    coffee: { t: 'קפה ומאפה', s: 'ארומה · בקרוב' },
+    voucher: { t: 'שובר לבחירה', s: 'BuyMe · בקרוב' },
+  };
+  const PLACES = ['ארומה', 'אוטלו', 'ברטון', 'קפה גרג', 'לנדוור', 'רולדין'];
+  const TAGS = ['פרחים', 'ספרים', 'יין', 'סושי', 'ספא', 'צמחים', 'שוקולד', 'פיצה', 'הופעות'];
+  const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+  const HEART = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="#1B1116"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.8 4.2 7.2C19.5 16.4 12 21 12 21z"/></svg>';
+  const CHECK = '<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1B1116" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+
+  const todayStr = (plus) => { const d = new Date(Date.now() + (plus || 0) * 864e5); return d.toISOString().slice(0, 10); };
+  function daysLeft(dateStr) {
+    const d = Math.round((new Date(dateStr + 'T00:00:00') - new Date(todayStr() + 'T00:00:00')) / 864e5);
+    if (d < 0) return { t: 'נגמר. מי ניצח?', hot: true, past: true };
+    if (d === 0) return { t: 'נגמר היום!', hot: true, past: true };
+    if (d === 1) return { t: 'מחר נגמר!', hot: true };
+    return { t: `עוד ${d} ימים`, hot: false };
+  }
+  const bdayText = (b) => { if (!b) return ''; const [m, d] = b.split('-').map(Number); return `${d} ב${MONTHS[m - 1]}`; };
+  function nextBirthday(b) {
+    if (!b) return null;
+    const [m, d] = b.split('-').map(Number); const now = new Date();
+    let t = new Date(now.getFullYear(), m - 1, d, 0, 0, 0);
+    if (t <= now) t = new Date(now.getFullYear() + 1, m - 1, d, 0, 0, 0);
+    return t;
+  }
+  function whenText(iso) {
+    const d = new Date(iso); const days = Math.round((d - new Date()) / 864e5);
+    const hm = d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    if (days <= 0) return `היום ב-${hm}`; if (days === 1) return `מחר ב-${hm}`;
+    return `${d.toLocaleDateString('he-IL', { day: 'numeric', month: 'long' })} ב-${hm}`;
+  }
+
+  function navTabs(active) {
+    const t = [['', 'חשבונות', 'beefs'], ['bets', 'התערבויות', 'bets'], ['good', 'קארמה טובה', 'good']];
+    return `<nav class="tabs" aria-label="אזורים">${t.map(([h, l, k]) => `<a class="tab" href="#/${h}" ${active === k ? 'aria-current="page" aria-selected="true"' : 'aria-selected="false"'} style="display:inline-flex;align-items:center;text-decoration:none">${l}</a>`).join('')}</nav>`;
+  }
+  const homeHeader = () => `<header class="top">${logo()}
+      <div class="row" style="gap:8px">
+        <a class="icon-btn" href="#/friends" aria-label="חברים">${ICON.friends}</a>
+        <a class="icon-btn" href="#/profile" aria-label="פרופיל">${ICON.user}</a>
+      </div></header>`;
+  const friendPicker = (sel, attr, list) => `<div class="friends-row">${(list || state.friends).map((x) => `<button class="friend-pick" ${attr}="${esc(x.id)}" aria-pressed="${sel === x.id || (Array.isArray(sel) && sel.includes(x.id))}">${av(x.display_name, x.color, 'lg')}<span>${esc(x.display_name)}</span></button>`).join('')}</div>`;
+  const noFriends = (title) => {
+    render(`${header(title, { close: true })}
+      <div class="card pink col" style="margin-top:10px"><h2>קודם צריך חברים</h2>
+      <p style="margin:0">שולחים לחברים הזמנה בוואטסאפ, וכשהם נכנסים אתם מחוברים.</p></div>
+      <div class="stack-bottom"><a class="btn" href="#/friends">להזמין חברים</a></div>`);
+    wireBack('');
+  };
+
+  // ───────────── Bets list ─────────────
+  async function screenBets() {
+    loading();
+    const bets = await api.myBets();
+    const resolved = bets.filter((b) => b.status === 'resolved');
+    const wins = resolved.filter((b) => b.i_won).length; const losses = resolved.length - wins;
+    const badge = !resolved.length ? 'עוד אין תוצאות' : wins > losses ? me('הנביאה של החבורה', 'הנביא של החבורה', 'הנביאים של החבורה') : wins === losses ? 'תיקו מכובד' : me('מפסידה בכבוד', 'מפסיד בכבוד', 'מפסידים בכבוד');
+    const owedToMe = resolved.filter((b) => b.i_won && !b.paid).length;
+    const needsMe = (b) => (b.status === 'proposed' && b.awaiting_me) || b.status === 'disputed' || (b.status === 'active' && daysLeft(b.resolve_on).past && !b.my_claim) || (b.status === 'resolved' && b.i_won && !b.paid);
+    const groups = [
+      ['מחכה לך', bets.filter(needsMe)],
+      ['פתוחות', bets.filter((b) => !needsMe(b) && (b.status === 'active' || (b.status === 'proposed' && !b.awaiting_me)))],
+      ['נסגרו', bets.filter((b) => !needsMe(b) && ['resolved', 'declined'].includes(b.status))],
+    ];
+    const card = (b) => {
+      const dl = daysLeft(b.resolve_on);
+      let tag = dl.t, hot = dl.hot && b.status === 'active';
+      if (b.status === 'proposed') { tag = b.awaiting_me ? 'קיבלת אתגר!' : 'ממתין לאישור'; hot = b.awaiting_me; }
+      if (b.status === 'disputed') { tag = 'לא מסכימים'; hot = true; }
+      if (b.status === 'resolved') { tag = b.i_won ? (b.paid ? 'ניצחת · נגבה' : 'ניצחת! לגבות') : (b.paid ? 'הפסדת · שולם' : 'הפסדת'); hot = b.i_won && !b.paid; }
+      if (b.status === 'declined') tag = 'לא נכנסו';
+      return `<a href="#/bet/${esc(b.id)}" class="card col ${hot ? 'pink' : ''} ${b.status === 'declined' ? 'flat' : ''}" style="gap:8px;text-decoration:none;${hot ? '' : 'box-shadow:none'}">
+        <div class="row between"><span class="tag ${hot ? '' : b.status === 'resolved' ? 'lime' : 'peach'}" ${hot ? 'style="background:var(--ink);color:var(--cream)"' : ''}>${esc(tag)}</span>
+          <span class="micro"><b>מול ${esc(b.other_name)} · ${esc(stakeLabel(b))}</b></span></div>
+        <span class="display" style="font-size:18px">${esc(b.topic)}</span>
+        <span class="micro"><b>${me('את', 'אתה', 'אתם')}: ${esc(b.my_side)}</b> · ${esc(b.other_name)}: ${esc(b.their_side)}</span>
+      </a>`;
+    };
+    render(`
+      ${homeHeader()}
+      ${navTabs('bets')}
+      <section class="card hero lime row" style="gap:14px;align-items:center" aria-label="המאזן שלך">
+        <div class="display ltr" style="display:flex;align-items:baseline;gap:6px"><span style="font-size:54px;line-height:.9">${wins}</span><span style="font-size:26px">–</span><span style="font-size:54px;line-height:.9">${losses}</span></div>
+        <div class="col" style="gap:4px"><span class="display" style="font-size:18px">${badge}</span>
+          <span class="small">${wins} ניצחונות, ${losses} הפסדים.${owedToMe ? ` ${owedToMe} חובות בדרך ${me('אלייך', 'אליך', 'אליכם')}.` : ''}</span></div>
+      </section>
+      ${bets.length ? groups.filter(([, l]) => l.length).map(([t, l]) => `<div class="sec"><h2>${t}</h2><span class="small">${l.length}</span></div><div class="col">${l.map(card).join('')}</div>`).join('') : `
+        <div class="card col center" style="gap:10px"><h2>עוד אין התערבויות</h2><p class="muted" style="margin:0">על קפה, על התנצלות או על שיר מזויף. אף פעם לא על כסף.</p>
+        <a class="btn md lime" href="#/bet-new">להתערב ראשונה</a></div>`}
+      <div style="height:70px"></div>`, { after: `<a class="fab" href="#/bet-new" aria-label="התערבות חדשה" style="background:var(--lime)">${ICON.plus}</a>` });
+  }
+
+  // ───────────── New bet ─────────────
+  async function screenBetNew() {
+    loading();
+    await loadFriends();
+    if (!state.friends.length) return noFriends('התערבות חדשה');
+    const f = { opponent: state.addTarget || null, category: 'sport', topic: '', mySide: 'כן', theirSide: 'לא', stake: 'coffee', stakeText: '', resolveOn: todayStr(7) };
+    state.addTarget = null;
+    const draw = () => {
+      const o = friendById(f.opponent);
+      render(`
+        ${header('התערבות חדשה', { close: true })}
+        <div class="tabs" role="tablist" aria-label="נושא">${Object.entries(BET_CATS).map(([k, l]) => `<button class="tab" role="tab" data-cat="${k}" aria-selected="${f.category === k}">${l}</button>`).join('')}</div>
+        ${BET_TEMPLATES[f.category].length ? `<div class="wrap">${BET_TEMPLATES[f.category].map((t) => `<button class="chip" data-tpl="${esc(t)}" aria-pressed="${f.topic === t}">${esc(t)}</button>`).join('')}</div>` : ''}
+        <label class="field">על מה מתערבים?
+          <input class="input" id="topic" maxlength="80" value="${esc(f.topic)}" placeholder="למשל: מכבי לוקחת אליפות השנה" style="font-family:var(--display);font-weight:700">
+        </label>
+        <section class="col"><h3>עם מי?</h3>${friendPicker(f.opponent, 'data-opp')}</section>
+        <section aria-label="הצדדים" style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label class="card lime col" style="gap:6px;align-items:center;box-shadow:var(--sh-m)"><span class="small">${me('אני אומרת', 'אני אומר', 'אנחנו אומרים')}</span>
+            <input class="input" id="myside" maxlength="30" value="${esc(f.mySide)}" style="height:44px;text-align:center;font-family:var(--display);font-weight:900;font-size:20px"></label>
+          <label class="card col" style="gap:6px;align-items:center;box-shadow:none"><span class="small">${o ? `${esc(o.display_name)} ${G(o.pronoun, 'אומרת', 'אומר', 'אומרים')}` : 'החבר אומר'}</span>
+            <input class="input" id="theirside" maxlength="30" value="${esc(f.theirSide)}" style="height:44px;text-align:center;font-family:var(--display);font-weight:900;font-size:20px"></label>
+          <span aria-hidden="true" class="ltr display" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-8deg);width:44px;height:44px;border-radius:22px;background:var(--ink);color:var(--cream);border:2.5px solid var(--cream);display:flex;align-items:center;justify-content:center;font-size:15px;pointer-events:none">VS</span>
+        </section>
+        <section class="col"><h3>מה המפסיד חייב?</h3>
+          <div class="grid2">${Object.entries(STAKES).map(([k, l]) => `<button class="chip center" data-stake="${k}" aria-pressed="${f.stake === k}" style="min-height:46px">${l}</button>`).join('')}</div>
+          ${f.stake === 'custom' ? `<input class="input" id="staketext" maxlength="60" value="${esc(f.stakeText)}" placeholder="למשל: שוטף לי את האוטו">` : ''}
+        </section>
+        <label class="check" style="justify-content:space-between"><span>מתי יודעים?<span class="sub">נזכיר לשניכם יום לפני</span></span>
+          <input type="date" id="date" class="input" style="width:auto;height:44px" min="${todayStr()}" value="${esc(f.resolveOn)}"></label>
+        <p class="card peach flat small" id="modwarn" role="alert" hidden style="margin:0"></p>
+        <button class="btn" id="send" style="background:var(--chili)">לזרוק את הכפפה</button>
+        <p class="micro muted center" style="margin:-8px 0 0">רק על קפה, טובות והתנצלויות. אף פעם לא על כסף.</p>`);
+      wireBack('bets');
+      const $send = $app.querySelector('#send'); const $warn = $app.querySelector('#modwarn');
+      const read = () => {
+        f.topic = $app.querySelector('#topic').value; f.mySide = $app.querySelector('#myside').value; f.theirSide = $app.querySelector('#theirside').value;
+        f.resolveOn = $app.querySelector('#date').value; const st = $app.querySelector('#staketext'); if (st) f.stakeText = st.value;
+      };
+      const validate = () => {
+        read();
+        const bad = modWarn($warn, [f.topic, f.mySide, f.theirSide, f.stakeText].join(' '));
+        $send.disabled = !!bad || !f.opponent || f.topic.trim().length < 2 || !f.mySide.trim() || !f.theirSide.trim() || !f.resolveOn || (f.stake === 'custom' && !f.stakeText.trim());
+      };
+      $app.querySelectorAll('input').forEach((i) => i.addEventListener('input', validate));
+      on('[data-cat]', 'click', (e) => { read(); f.category = e.currentTarget.dataset.cat; draw(); });
+      on('[data-tpl]', 'click', (e) => { read(); f.topic = e.currentTarget.dataset.tpl; draw(); });
+      on('[data-opp]', 'click', (e) => { read(); f.opponent = e.currentTarget.dataset.opp; draw(); });
+      on('[data-stake]', 'click', (e) => { read(); f.stake = e.currentTarget.dataset.stake; draw(); });
+      validate();
+      $send.onclick = async () => {
+        $send.disabled = true;
+        try {
+          const id = await api.createBet({ ...f, topic: f.topic.trim(), mySide: f.mySide.trim(), theirSide: f.theirSide.trim(), stakeText: f.stakeText.trim() });
+          api.log('bet_created', { category: f.category, stake: f.stake });
+          toast('הכפפה נזרקה. מחכים לתשובה'); go('bet/' + id);
+        } catch (err) { toast(errText(err)); $send.disabled = false; }
+      };
+    };
+    draw();
+  }
+
+  // ───────────── One bet ─────────────
+  async function screenBet(id) {
+    loading();
+    const bets = await api.myBets();
+    const b = bets.find((x) => x.id === id);
+    if (!b) return go('bets');
+    const o = b.other_name; const op = b.other_pronoun;
+    const sides = (big) => `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px">
+      <div class="card lime flat col center" style="gap:2px;padding:8px"><span class="micro">${me('את', 'אתה', 'אתם')}</span><span class="display" style="font-size:${big ? 20 : 17}px">${esc(b.my_side)}</span></div>
+      <span class="display ltr" style="font-size:14px">VS</span>
+      <div class="card cream flat col center" style="gap:2px;padding:8px"><span class="micro">${esc(o)}</span><span class="display" style="font-size:${big ? 20 : 17}px">${esc(b.their_side)}</span></div></div>`;
+    const betCard = (shadow) => `<article class="sticker" style="box-shadow:6px 6px 0 ${shadow || 'var(--lime)'}">
+      <div class="wrap"><span class="tag lime">התערבות</span><span class="tag">${BET_CATS[b.category] || ''}</span><span class="tag">עד ${new Date(b.resolve_on).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })}</span></div>
+      <span class="display" style="font-size:22px;line-height:1.15">${esc(b.topic)}</span>${sides(true)}
+      <div class="row between" style="border-top:2px dashed var(--ink);padding-top:10px"><span class="small">המפסיד חייב</span><b class="display" style="font-size:16px">${esc(stakeLabel(b))}</b></div></article>`;
+
+    // Invitation
+    if (b.status === 'proposed' && b.awaiting_me) {
+      api.log('bet_invite_viewed');
+      render(`
+        <div class="card cream row" style="align-items:flex-start"><span class="av lime" style="border-radius:10px;width:36px;height:36px;font-size:15px">K.</span>
+          <div><div class="micro"><b>KARMA. · ${timeAgo(b.created_at)}</b></div><b>${esc(o)} ${G(op, 'זרקה', 'זרק', 'זרקו')} ${me('עלייך', 'עליך', 'עליכם')} כפפה</b></div></div>
+        <div class="ltr" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:6px">
+          <span class="display" style="font-size:46px;line-height:.95">You've been</span>
+          <span class="display" style="font-size:52px;line-height:.95;color:var(--lime)">CHALLENGED!</span></div>
+        ${betCard()}
+        <div id="counter" hidden class="card cream col"><b>מה ${me('את מציעה', 'אתה מציע', 'אתם מציעים')} במקום?</b>
+          <div class="grid2">${Object.entries(STAKES).filter(([k]) => k !== 'custom').map(([k, l]) => `<button class="chip center" data-cs="${k}" aria-pressed="false">${l}</button>`).join('')}</div></div>
+        <div class="stack-bottom">
+          <button class="btn lime" data-a="accept">${me('אני בפנים', 'אני בפנים', 'אנחנו בפנים')}</button>
+          <button class="btn md white" data-a="counter">להציע מחיר אחר</button>
+          <button class="btn ghost" data-a="decline">לא בא לי, תודה</button>
+        </div>`, { dark: true });
+      on('[data-a]', 'click', async (e) => {
+        const a = e.currentTarget.dataset.a;
+        if (a === 'counter') { $app.querySelector('#counter').hidden = false; return; }
+        try { await api.respondBet(id, a); api.log('bet_' + a); toast(a === 'accept' ? 'יאללה! ההתערבות פתוחה' : 'אולי בפעם הבאה'); go(a === 'accept' ? 'bet/' + id : 'bets'); } catch (err) { toast(errText(err)); }
+      });
+      on('[data-cs]', 'click', async (e) => {
+        try { await api.respondBet(id, 'counter', e.currentTarget.dataset.cs, ''); api.log('bet_counter'); toast(`ההצעה נשלחה ל${o}`); go('bets'); } catch (err) { toast(errText(err)); }
+      });
+      return;
+    }
+
+    // Resolved
+    if (b.status === 'resolved') {
+      const won = b.i_won;
+      render(`
+        ${header(won ? 'ניצחת!' : 'הפסדת. בכבוד.')}
+        <article class="card col" style="gap:4px;box-shadow:none"><span class="micro muted"><b>מול ${esc(o)}</b></span><span class="display" style="font-size:19px">${esc(b.topic)}</span></article>
+        <article class="sticker" style="background:var(--ink);color:var(--cream);box-shadow:6px 6px 0 ${won ? 'var(--chili)' : 'var(--pink)'}">
+          <span class="display ltr" style="font-size:13px;letter-spacing:.4px;color:var(--lime);text-align:right">${won ? 'YOU WIN' : 'GOOD GAME'}</span>
+          <span class="display" style="font-size:28px;line-height:1.08">${won ? `${esc(o)} ${G(op, 'חייבת', 'חייב', 'חייבים')} ${me('לך', 'לך', 'לכם')}` : `${me('את חייבת', 'אתה חייב', 'אתם חייבים')} ל${esc(o)}`}<br>${esc(stakeLabel(b))}</span>
+          <span class="small" style="color:#E8DDE2">${b.paid ? 'שולם. החשבון סגור.' : won ? `כשזה קורה, ${me('תסמני', 'תסמן', 'תסמנו')} שקיבלת.` : 'הקארמה מחכה.'}</span>
+        </article>
+        <div class="stack-bottom">
+          ${won && !b.paid ? `<button class="btn" data-paid>קיבלתי, סגרנו</button>` : ''}
+          ${!won && !b.paid ? `<a class="btn pink" href="#/good-new/${esc(b.other)}">לשלם עם קארמה טובה</a>` : ''}
+          <button class="btn md white" data-share>לשתף</button>
+        </div>`);
+      wireBack('bets');
+      on('[data-paid]', 'click', async () => { try { await api.markBetPaid(id); api.log('bet_paid'); toast('נגבה. קארמה מאוזנת'); screenBet(id); } catch (err) { toast(errText(err)); } });
+      on('[data-share]', 'click', async () => {
+        api.log('bet_shared');
+        const text = `${won ? 'ניצחתי' : 'הפסדתי'} בהתערבות ב-KARMA.: ${b.topic} 🏆\n${inviteBase()}`;
+        try { if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast('הועתק'); } } catch (e) {}
+      });
+      return;
+    }
+
+    // Proposed (waiting for them), active, disputed, declined
+    const dl = daysLeft(b.resolve_on);
+    const waitingThem = b.status === 'proposed';
+    let middle = '';
+    if (waitingThem) middle = `<div class="card cream flat center small">מחכים ש${esc(o)} ${G(op, 'תענה', 'יענה', 'יענו')}${b.i_created ? '' : ` על ההצעה ${me('שלך', 'שלך', 'שלכם')}`}.</div>`;
+    else if (b.status === 'declined') middle = `<div class="card cream flat center">${esc(o)} לא ${G(op, 'נכנסה', 'נכנס', 'נכנסו')} הפעם.</div>`;
+    else {
+      const claimed = b.my_claim && b.status === 'active';
+      middle = `
+        ${b.status === 'disputed' ? `<div class="card peach col"><b>לא מסכימים מי ניצח.</b><span class="small">דברו על זה, ואז ${me('סמני', 'סמן', 'סמנו')} שוב. אם עדיין לא מסכימים, הקבוצה תכריע (בקרוב).</span></div>` : ''}
+        <div class="row between"><h2>${dl.past ? 'נגמר. מי צדק?' : 'כבר יודעים מי צדק?'}</h2><span class="tag ${dl.hot ? 'pink' : 'peach'}">${dl.t}</span></div>
+        ${claimed ? `<div class="card lav row">${CHECK}<span>${me('סימנת', 'סימנת', 'סימנתם')} ש${b.my_claim === api.myId() ? me('את צדקת', 'אתה צדקת', 'אתם צדקתם') : `${esc(o)} ${G(op, 'צדקה', 'צדק', 'צדקו')}`}. מחכים ל${esc(o)}.</span></div>` : `
+        <div class="grid2">
+          <button class="card lime col center" data-claim="${esc(api.myId())}" style="gap:4px;box-shadow:var(--sh-m)"><b>${me('אני צדקתי', 'אני צדקתי', 'אנחנו צדקנו')}</b><span class="small">״${esc(b.my_side)}״</span></button>
+          <button class="card col center" data-claim="${esc(b.other)}" style="gap:4px;box-shadow:none"><b>${esc(o)} ${G(op, 'צדקה', 'צדק', 'צדקו')}</b><span class="small">״${esc(b.their_side)}״</span></button>
+        </div>`}`;
+    }
+    render(`
+      ${header('התערבות')}
+      ${betCard('var(--ink)')}
+      ${middle}
+      <div class="stack-bottom">
+        ${waitingThem && b.i_created ? '<button class="btn ghost" data-cancel>לבטל את ההתערבות</button>' : ''}
+        <a class="btn md white" href="#/bets">לכל ההתערבויות</a>
+      </div>`);
+    wireBack('bets');
+    on('[data-claim]', 'click', async (e) => {
+      const w = e.currentTarget.dataset.claim;
+      try {
+        const r = await api.claimBet(id, w); api.log('bet_claimed', { result: r });
+        toast(r === 'resolved' ? 'יש תוצאה!' : r === 'disputed' ? 'לא מסכימים. דברו על זה' : `נשמר. מחכים ל${o}`); screenBet(id);
+      } catch (err) { toast(errText(err)); }
+    });
+    on('[data-cancel]', 'click', async () => { try { await api.cancelBet(id); toast('בוטל'); go('bets'); } catch (err) { toast(errText(err)); } });
+  }
+
+  // ───────────── Good karma hub ─────────────
+  async function screenGood() {
+    loading();
+    const [inbox, sent, cards, forMe] = await Promise.all([api.karmaInbox(), api.karmaSent(), api.myGroupCards(), api.groupCardsForMe(), loadFriends()]);
+    const month = (iso) => Date.now() - new Date(iso) < 30 * 864e5;
+    const got = inbox.filter((k) => month(k.delivered_at)).length;
+    const gave = sent.filter((k) => !k.scheduled && month(k.deliver_at)).length;
+    const pending = sent.filter((k) => k.scheduled);
+    const revealAsks = sent.filter((k) => k.reveal_status === 'open');
+    const openCards = cards.filter((c) => !c.delivered);
+    const kItem = (k) => `<a class="beef" href="#/karma/${esc(k.id)}" style="background:${k.kind === 'compliment' ? 'var(--ink);color:var(--cream)' : 'var(--pink-soft)'}">
+      ${k.sender_name ? av(k.sender_name, k.sender_color) : '<span class="av anon">?</span>'}
+      <span class="body"><span class="reason" ${k.kind === 'compliment' ? 'style="color:var(--cream)"' : ''}>${esc(k.kind === 'compliment' ? k.message : k.occasion || k.message || 'קארמה טובה')}</span>
+      <span class="meta" ${k.kind === 'compliment' ? 'style="color:#CBBFC5"' : ''}>${k.sender_name ? esc(k.sender_name) : 'מישהו מהחברים'} · ${timeAgo(k.delivered_at)}${k.can_pass ? ' · אפשר להעביר הלאה' : ''}</span></span></a>`;
+    render(`
+      ${homeHeader()}
+      ${navTabs('good')}
+      <section class="card hero pink" aria-label="קארמה טובה">
+        <div class="ltr display" style="font-size:13px;font-weight:700;text-align:left">GOOD KARMA</div>
+        <div class="row" style="gap:18px;align-items:flex-end">
+          <div class="col" style="gap:2px"><span class="counter" style="font-size:64px">${got}</span><span class="small"><b>קיבלת החודש</b></span></div>
+          <div class="col" style="gap:2px"><span class="counter" style="font-size:64px">${gave}</span><span class="small"><b>נתת החודש</b></span></div>
+        </div>
+        <div class="grid2">
+          <a class="btn md white" href="#/good-new">קארמה טובה</a>
+          <a class="btn md dark" href="#/compliment">מחמאה אנונימית</a>
+          <a class="btn md white" href="#/card-new">קופה משותפת</a>
+          <a class="btn md white" href="#/donate">תרומה בשם מישהו</a>
+        </div>
+      </section>
+      ${revealAsks.map((k) => `<div class="card lime col"><b>${esc(k.recipient_name)} רוצה לדעת שהמחמאה ״${esc(k.message)}״ ממך</b>
+        <div class="row" style="gap:8px"><button class="btn md dark" data-kr="${esc(k.id)}" data-yes="1" style="flex:1">לחשוף</button><button class="btn md white" data-kr="${esc(k.id)}" data-yes="0" style="flex:1">להישאר בצל</button></div></div>`).join('')}
+      ${forMe.map((c) => `<a class="card lime row" href="#/card/${esc(c.id)}" style="text-decoration:none"><span style="flex:1"><b>כרטיס קבוצתי בשבילך!</b><br><span class="small">${esc(c.title)} · ${c.members} חברים כתבו</span></span>${ICON.back.replace('M9 6l6 6-6 6', 'M15 6l-6 6 6 6')}</a>`).join('')}
+      ${inbox.length ? `<div class="sec"><h2>קיבלת</h2><span class="small">${inbox.length}</span></div><div class="col">${inbox.slice(0, 6).map(kItem).join('')}</div>` : ''}
+      ${openCards.length ? `<div class="sec"><h2>קופות פתוחות</h2></div><div class="col">${openCards.map((c) => `<a class="beef" href="#/card/${esc(c.id)}">${av(c.recipient_name, c.recipient_color)}
+        <span class="body"><span class="reason">${esc(c.title)}</span><span class="meta">בשביל ${esc(c.recipient_name)} · ${c.joined_count} מתוך ${c.members} בפנים</span></span>${c.joined ? '' : '<span class="status in_progress" style="direction:rtl">הוזמנת</span>'}</a>`).join('')}</div>` : ''}
+      ${pending.length ? `<div class="sec"><h2>מתוזמנות</h2></div><div class="col">${pending.map((k) => `<div class="beef">${av(k.recipient_name, k.recipient_color)}
+        <span class="body"><span class="reason">${esc(k.occasion || k.message || 'קארמה טובה')}</span><span class="meta">ל${esc(k.recipient_name)} · ${whenText(k.deliver_at)}</span></span>
+        <button class="btn md white" style="width:auto;min-height:36px;padding:0 10px;font-size:12px" data-cancelk="${esc(k.id)}">לבטל</button></div>`).join('')}</div>` : ''}
+      <div class="sec"><h2>החברים שלי</h2></div>
+      <div class="col">${state.friends.length ? state.friends.map((x) => `<a class="beef" href="#/friend/${esc(x.id)}" style="box-shadow:none">${av(x.display_name, x.color)}<span class="body"><span class="reason">${esc(x.display_name)}</span><span class="meta">המאזן, ומה משמח ${G(x.pronoun, 'אותה', 'אותו', 'אותם')}</span></span></a>`).join('') : '<a class="btn md white" href="#/friends">להזמין חברים</a>'}</div>
+      <a class="card cream row" href="#/wishlist" style="text-decoration:none;box-shadow:none"><span style="flex:1"><b>מה משמח אותי</b><br><span class="small">ככה החברים ידעו מה לשלוח ${me('לך', 'לך', 'לכם')}</span></span></a>
+      <div style="height:70px"></div>`, { after: `<a class="fab" href="#/good-new" aria-label="קארמה טובה חדשה" style="background:var(--pink)">${ICON.plus}</a>` });
+    on('[data-cancelk]', 'click', async (e) => { try { await api.cancelKarma(e.currentTarget.dataset.cancelk); toast('בוטל'); screenGood(); } catch (err) { toast(errText(err)); } });
+    on('[data-kr]', 'click', async (e) => {
+      const yes = e.currentTarget.dataset.yes === '1';
+      try { await api.respondKarmaReveal(e.currentTarget.dataset.kr, yes); toast(yes ? 'נחשפת. עכשיו יודעים שזה ממך' : 'נשארת בצל'); screenGood(); } catch (err) { toast(errText(err)); }
+    });
+  }
+
+  // ───────────── Send good karma / compliment / pass it on ─────────────
+  async function screenGoodNew(opts) {
+    loading();
+    const [inbox] = await Promise.all([opts.passFrom ? api.karmaInbox() : Promise.resolve([]), loadFriends()]);
+    const src = opts.passFrom ? inbox.find((k) => k.id === opts.passFrom && k.can_pass) : null;
+    if (opts.passFrom && !src) { toast('עברו 24 שעות, השרשרת נסגרה. אפשר לשלוח קארמה רגילה'); return go('good-new'); }
+    const friends = src && src.sender ? state.friends.filter((x) => x.id !== src.sender) : state.friends;
+    if (!friends.length) return noFriends('קארמה טובה');
+    const f = { recipient: opts.to || null, kind: opts.compliment ? 'compliment' : 'karma', occasion: '', message: '', gift: 'words', when: 'now', at: '' };
+    let prof = null;
+    const loadProf = async () => { prof = f.recipient ? await api.friendProfile(f.recipient).catch(() => null) : null; };
+    await loadProf();
+    const draw = () => {
+      const t = friendById(f.recipient); const pron = t ? t.pronoun : 'f';
+      const isC = f.kind === 'compliment';
+      const likes = (prof && prof.likes) || {};
+      const likeBits = [likes.coffee, likes.sweet, ...(likes.places || []), ...(likes.tags || [])].filter(Boolean);
+      const bday = prof && nextBirthday(prof.birthday);
+      const title = src ? 'להעביר הלאה' : isC ? 'מחמאה אנונימית' : 'קארמה טובה';
+      render(`
+        <header class="top"><div class="col" style="gap:2px"><span class="display ltr" style="font-size:13px;color:#C2185B;text-align:right">${src ? 'PASS IT ON' : isC ? 'ANONYMOUS' : 'GOOD KARMA'}</span><h1>${title}</h1></div>
+          <button class="icon-btn" data-back aria-label="סגירה">${ICON.close}</button></header>
+        ${src ? `<div class="card col" style="gap:6px"><b>הקארמה הזאת עברה כבר דרך ${src.chain_length} ${src.chain_length === 1 ? 'אדם' : 'אנשים'}</b><span class="small">יש ${me('לך', 'לך', 'לכם')} עד ${whenText(src.pass_until)} להעביר אותה למישהו שמגיע לו.</span></div>` : `
+        <div class="seg" role="group" aria-label="סוג"><button type="button" data-kind="karma" aria-pressed="${!isC}">קארמה טובה</button><button type="button" data-kind="compliment" aria-pressed="${isC}">מחמאה אנונימית</button></div>`}
+        <section class="col"><h3>למי?</h3>${friendPicker(f.recipient, 'data-to', friends)}</section>
+        ${isC ? `
+        <section class="col"><h3>מה ${me('את חושבת', 'אתה חושב', 'אתם חושבים')} ${t ? `על ${esc(t.display_name)}` : ''}?</h3>
+          <div class="wrap">${COMPLIMENTS.map((c) => G(pron, c[0], c[1], c[2])).map((c) => `<button class="chip" data-comp="${esc(c)}" aria-pressed="${f.message === c}">${esc(c)}</button>`).join('')}</div></section>
+        <label class="field">או במילים ${me('שלך', 'שלך', 'שלכם')}<textarea class="input" id="msg" maxlength="140" placeholder="מה ${me('את אוהבת', 'אתה אוהב', 'אתם אוהבים')} בה/בו?">${esc(f.message)}</textarea></label>
+        <div class="card lav flat small">${t ? esc(t.display_name) : 'החבר'} ${G(pron, 'לא תדע', 'לא ידע', 'לא ידעו')} שזה ממך, אלא אם ${G(pron, 'תבקש', 'יבקש', 'יבקשו')} ו${me('תסכימי', 'תסכים', 'תסכימו')}.</div>` : `
+        <section class="col"><h3>למה?</h3>
+          <div class="wrap">${OCCASIONS.map((o) => `<button class="chip" data-occ="${esc(o)}" aria-pressed="${f.occasion === o}">${esc(o)}</button>`).join('')}</div></section>
+        ${likeBits.length ? `<div class="card lav flat small col" style="gap:4px"><b>מה משמח את ${esc(t.display_name)}</b><span>${likeBits.map(esc).join(' · ')}</span></div>` : ''}
+        <section class="col"><h3>מצרפים משהו?</h3>
+          <div class="grid3">${Object.entries(GIFTS).map(([k, g]) => `<button class="spice" data-gift="${k}" aria-pressed="${f.gift === k}" style="height:68px"><span>${g.t}</span><span class="micro" style="font-weight:400">${g.s}</span></button>`).join('')}</div>
+          ${f.gift !== 'words' ? '<p class="card peach flat small" style="margin:0">מתנות בתשלום יגיעו בקרוב. בינתיים זה יישלח עם המילים, ורשמנו שרצית.</p>' : ''}
+        </section>
+        <label class="field">כמה מילים (לא חובה)<textarea class="input" id="msg" maxlength="140" placeholder="למשל: אין עלייך. הקפה הזה בשבילך">${esc(f.message)}</textarea></label>`}
+        <section class="col"><h3>מתי זה יגיע?</h3>
+          <div class="wrap">
+            ${[['now', 'עכשיו'], ['morning', 'מחר בבוקר'], ...(bday ? [['bday', `ביום ההולדת (${bdayText(prof.birthday)})`]] : []), ['surprise', 'הפתעה השבוע'], ['custom', 'תאריך ושעה']].map(([k, l]) => `<button class="chip" data-when="${k}" aria-pressed="${f.when === k}">${l}</button>`).join('')}
+          </div>
+          ${f.when === 'custom' ? `<input type="datetime-local" class="input" id="at" value="${esc(f.at)}" min="${new Date(Date.now() + 36e5).toISOString().slice(0, 16)}">` : ''}
+        </section>
+        <p class="card peach flat small" id="modwarn" role="alert" hidden style="margin:0"></p>
+        <button class="btn pink" id="send">${src ? 'להעביר הלאה' : isC ? 'לשלוח בעילום שם' : 'לשלוח קארמה טובה'}</button>`, { theme: 'pink' });
+      wireBack(src ? 'karma/' + src.id : 'good');
+      const $send = $app.querySelector('#send'); const $warn = $app.querySelector('#modwarn');
+      const read = () => { const m = $app.querySelector('#msg'); if (m) f.message = m.value; const a = $app.querySelector('#at'); if (a) f.at = a.value; };
+      const validate = () => {
+        read();
+        const bad = modWarn($warn, f.message);
+        $send.disabled = !!bad || !f.recipient || (isC && f.message.trim().length < 2) || (!isC && !f.occasion && !f.message.trim()) || (f.when === 'custom' && !f.at);
+      };
+      $app.querySelectorAll('textarea,input').forEach((i) => i.addEventListener('input', validate));
+      on('[data-kind]', 'click', (e) => { read(); f.kind = e.currentTarget.dataset.kind; f.message = ''; draw(); });
+      on('[data-to]', 'click', async (e) => { read(); f.recipient = e.currentTarget.dataset.to; await loadProf(); if (f.when === 'bday') f.when = 'now'; draw(); });
+      on('[data-comp]', 'click', (e) => { f.message = e.currentTarget.dataset.comp; draw(); });
+      on('[data-occ]', 'click', (e) => { read(); f.occasion = f.occasion === e.currentTarget.dataset.occ ? '' : e.currentTarget.dataset.occ; draw(); });
+      on('[data-gift]', 'click', (e) => { read(); f.gift = e.currentTarget.dataset.gift; if (f.gift !== 'words') api.log('gift_interest', { gift: f.gift, where: 'good_karma' }); draw(); });
+      on('[data-when]', 'click', (e) => { read(); f.when = e.currentTarget.dataset.when; draw(); });
+      validate();
+      $send.onclick = async () => {
+        read(); $send.disabled = true;
+        let at = null;
+        if (f.when === 'morning') { const d = new Date(Date.now() + 864e5); d.setHours(8, 0, 0, 0); at = d; }
+        if (f.when === 'bday') at = nextBirthday(prof.birthday);
+        if (f.when === 'surprise') { const d = new Date(Date.now() + (1 + Math.floor(Math.random() * 5)) * 864e5); d.setHours(10 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60), 0, 0); at = d; }
+        if (f.when === 'custom') at = new Date(f.at);
+        try {
+          await api.sendKarma({ recipient: f.recipient, kind: f.kind, occasion: isC ? '' : f.occasion, message: f.message.trim(), gift: f.gift, anonymous: isC, deliverAt: at ? at.toISOString() : null, passFrom: src ? src.id : null });
+          api.log(src ? 'karma_passed' : f.kind === 'compliment' ? 'compliment_sent' : 'karma_sent', { when: f.when, gift: f.gift });
+          toast(at ? (f.when === 'surprise' ? `מתוזמן להפתעה. גם ${me('את לא יודעת', 'אתה לא יודע', 'אתם לא יודעים')} מתי` : `יגיע ${whenText(at.toISOString())}`) : 'נשלח! קארמה טובה בדרך');
+          go('good');
+        } catch (err) { toast(errText(err)); $send.disabled = false; }
+      };
+    };
+    draw();
+  }
+
+  // ───────────── Received karma / compliment ─────────────
+  async function screenKarma(id) {
+    loading();
+    const [inbox] = await Promise.all([api.karmaInbox(), loadFriends()]);
+    const k = inbox.find((x) => x.id === id);
+    if (!k) return go('good');
+    const seen = store.get('karma_k_seen', []); if (!seen.includes(id)) { seen.push(id); store.set('karma_k_seen', seen.slice(-200)); }
+    api.log('karma_viewed', { kind: k.kind });
+    const leftH = Math.max(0, Math.round((new Date(k.pass_until) - Date.now()) / 36e5));
+    if (k.kind === 'compliment') {
+      render(`
+        <div class="card cream row" style="align-items:flex-start"><span class="av pink" style="border-radius:10px;width:36px;height:36px;font-size:15px">K.</span>
+          <div><div class="micro"><b>KARMA. · ${timeAgo(k.delivered_at)}</b></div><b>${k.sender_name ? `${esc(k.sender_name)} ${G((friendById(k.sender) || {}).pronoun, 'חושבת', 'חושב', 'חושבים')} ${me('עלייך', 'עליך', 'עליכם')} משהו טוב` : `מישהו חושב ${me('עלייך', 'עליך', 'עליכם')} משהו טוב`}</b></div></div>
+        <div class="ltr" style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:20px">
+          <span class="display" style="font-size:44px;line-height:.95">Someone thinks</span>
+          <span class="display" style="font-size:44px;line-height:.95;color:var(--pink)">you're the best.</span></div>
+        <article class="sticker" style="background:var(--pink);border-color:var(--cream);box-shadow:6px 6px 0 var(--cream)">
+          <span class="small"><b>${k.sender_name ? `${esc(k.sender_name)} ${G((friendById(k.sender) || {}).pronoun, 'חושבת', 'חושב', 'חושבים')}` : 'מישהו מהחבורה חושב'} ${me('שאת', 'שאתה', 'שאתם')}</b></span>
+          <span class="display" style="font-size:28px;line-height:1.08">${esc(k.message)}</span>
+          ${k.sender_name ? '' : '<span class="small blur">שירה מהעבודה</span>'}
+        </article>
+        <div class="stack-bottom">
+          ${k.sender_name ? '' : k.reveal_status === 'open' ? '<p class="center small" style="margin:0">ביקשת לדעת מי. מחכים לתשובה</p>' : k.reveal_status === 'declined' ? '<p class="center small" style="margin:0">מעדיפים להישאר בצל. וזה בסדר</p>' : '<button class="btn pink" data-reveal>לבקש לגלות מי</button>'}
+          <a class="btn md white" href="#/compliment">לשלוח מחמאה למישהו אחר</a>
+          <button class="btn ghost" data-back>חזרה</button>
+        </div>`, { dark: true });
+      on('[data-back]', 'click', () => back('good'));
+      on('[data-reveal]', 'click', async (e) => { e.currentTarget.disabled = true; try { await api.requestKarmaReveal(id); api.log('compliment_reveal_requested'); toast(`נשלח. אם ירצו, ${me('תדעי', 'תדע', 'תדעו')} מי`); screenKarma(id); } catch (err) { toast(errText(err)); } });
+      return;
+    }
+    render(`
+      <div class="card cream row" style="align-items:flex-start"><span class="av pink" style="border-radius:10px;width:36px;height:36px;font-size:15px">K.</span>
+        <div><div class="micro"><b>KARMA. · ${timeAgo(k.delivered_at)}</b></div><b>${esc(k.sender_name || 'מישהו')} ${me('שלח לך', 'שלח לך', 'שלח לכם')} קארמה טובה</b>
+        <div class="small">ולא, ${me('את לא חייבת', 'אתה לא חייב', 'אתם לא חייבים')} כלום בחזרה.</div></div></div>
+      <div class="ltr" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:20px">
+        <span class="display" style="font-size:44px;line-height:.95">You've got</span>
+        <span class="display" style="font-size:54px;line-height:.95;color:var(--cream);-webkit-text-stroke:2px var(--ink)">GOOD KARMA</span></div>
+      <article class="sticker" style="transform:rotate(2deg);box-shadow:6px 6px 0 var(--ink)">
+        ${k.occasion ? `<span class="tag pink" style="align-self:flex-start">${esc(k.occasion)}</span>` : ''}
+        ${k.message ? `<span class="display" style="font-size:19px;line-height:1.3;font-weight:700">״${esc(k.message)}״</span>` : ''}
+        <span class="small muted">${esc(k.sender_name || '')}</span>
+        ${k.chain_length > 1 ? `<span class="small"><b>הקארמה הזאת עברה כבר דרך ${k.chain_length} אנשים</b></span>` : ''}
+      </article>
+      <div class="stack-bottom">
+        ${k.can_pass ? `<a class="btn" href="#/pass/${esc(k.id)}" style="background:var(--cream)">להעביר הלאה · נשארו ${leftH} שעות</a>` : ''}
+        ${k.thanked ? `<p class="center small" style="margin:0">${CHECK} ${me('שלחת', 'שלחת', 'שלחתם')} תודה</p>` : '<button class="btn md white" data-thank>לשלוח תודה</button>'}
+        ${k.sender ? `<a class="btn ghost" href="#/good-new/${esc(k.sender)}">להחזיר קארמה טובה</a>` : ''}
+      </div>`, { theme: 'hotpink' });
+    on('[data-thank]', 'click', async (e) => { e.currentTarget.disabled = true; try { await api.thankKarma(id); api.log('karma_thanked'); toast('התודה נשלחה'); screenKarma(id); } catch (err) { toast(errText(err)); } });
+  }
+
+  // ───────────── Balance with one friend ─────────────
+  async function screenFriend(id) {
+    loading();
+    const [prof, tl] = await Promise.all([api.friendProfile(id), api.friendTimeline(id), loadFriends()]);
+    if (!prof) return go('good');
+    const good = tl.filter((x) => x.item === 'karma').length;
+    const open = tl.filter((x) => x.item === 'beef' && ['pending', 'in_progress'].includes(x.status)).length;
+    const total = Math.max(1, good + open);
+    const likes = prof.likes || {};
+    const likeBits = [likes.coffee, likes.sweet, ...(likes.places || []), ...(likes.tags || [])].filter(Boolean);
+    const icon = (x) => x.item === 'karma' ? `<span class="av pink" style="width:30px;height:30px">${HEART}</span>`
+      : x.item === 'bet' ? `<span class="av lime" style="width:30px;height:30px;font-size:11px">VS</span>`
+      : `<span class="av ${['pending', 'in_progress'].includes(x.status) ? 'spicy' : 'lime'}" style="width:30px;height:30px;font-size:14px">${['pending', 'in_progress'].includes(x.status) ? '!' : CHECK}</span>`;
+    const sub = (x) => x.item === 'karma' ? (x.mine ? 'שלחת קארמה טובה' : `${esc(prof.display_name)} ${G(prof.pronoun, 'שלחה', 'שלח', 'שלחו')} ${me('לך', 'לך', 'לכם')}`)
+      : x.item === 'bet' ? (x.status === 'resolved' ? (x.mine ? 'התערבות · ניצחת' : 'התערבות · הפסדת') : 'התערבות פתוחה')
+      : (x.mine ? 'טינה שלך' : 'טינה עלייך') + (['pending', 'in_progress'].includes(x.status) ? ' · עדיין פתוח' : ' · נסגר');
+    render(`
+      <header class="top"><div class="row" style="gap:12px">${av(prof.display_name, prof.color, 'lg')}
+        <div class="col" style="gap:2px"><h1 style="font-size:24px">${me('את', 'אתה', 'אתם')} ו${esc(prof.display_name)}</h1>${prof.birthday ? `<span class="small muted">יום הולדת: ${bdayText(prof.birthday)}</span>` : ''}</div></div>
+        <button class="icon-btn" data-back aria-label="חזרה">${ICON.back}</button></header>
+      <section class="card hero col" aria-label="המאזן" style="background:var(--white)">
+        <div class="row between"><span class="display ltr" style="font-size:13px">KARMA BALANCE</span>${good >= open ? `<span class="tag pink">${me('את בפלוס', 'אתה בפלוס', 'אתם בפלוס')}</span>` : '<span class="tag peach">יש מה לסגור</span>'}</div>
+        <div class="row between" style="align-items:flex-end">
+          <div class="col" style="gap:2px"><span class="counter ltr" style="font-size:48px;color:#C2185B">+${good}</span><span class="micro"><b>קארמה טובה</b></span></div>
+          <div class="col" style="gap:2px;align-items:flex-end"><span class="counter ltr" style="font-size:48px">−${open}</span><span class="micro"><b>חשבונות פתוחים</b></span></div>
+        </div>
+        <div role="img" aria-label="${good} טובות מול ${open} חשבונות פתוחים" style="display:flex;height:14px;border:2px solid var(--ink);border-radius:7px;overflow:hidden">
+          <div style="width:${Math.round(good / total * 100)}%;background:var(--pink)"></div><div style="flex:1;background:${open ? 'var(--ink)' : 'var(--cream)'}"></div></div>
+      </section>
+      ${likeBits.length ? `<div class="card lav flat col" style="gap:4px"><b>מה משמח את ${esc(prof.display_name)}</b><span class="small">${likeBits.map(esc).join(' · ')}</span></div>` : ''}
+      <div class="sec"><h2>מה היה ביניכם</h2></div>
+      <div class="col">${tl.length ? tl.map((x) => `<div class="beef" style="box-shadow:none;${x.item === 'karma' ? 'background:var(--pink-soft)' : ''}">${icon(x)}<span class="body"><span class="reason">${esc(x.title)}</span><span class="meta">${sub(x)} · ${timeAgo(x.at)}</span></span></div>`).join('') : '<p class="muted small center">עוד לא קרה כלום. זה הזמן.</p>'}</div>
+      <div class="grid3" style="margin-top:auto">
+        <a class="btn md pink" href="#/good-new/${esc(id)}">קארמה טובה</a>
+        <button class="btn md white" data-go="bet-new">התערבות</button>
+        <button class="btn md white" data-go="add">טינה</button>
+      </div>`);
+    on('[data-back]', 'click', () => back('good'));
+    on('[data-go]', 'click', (e) => { state.addTarget = id; go(e.currentTarget.dataset.go); });
+  }
+
+  // ───────────── What makes me happy ─────────────
+  async function screenWishlist() {
+    loading();
+    const prof = await api.friendProfile(api.myId());
+    const l = (prof && prof.likes) || {};
+    const f = { coffee: l.coffee || '', sweet: l.sweet || '', places: l.places || [], tags: l.tags || [], birthday: (prof && prof.birthday) || '' };
+    const [bm, bd] = f.birthday ? f.birthday.split('-') : ['', ''];
+    render(`
+      ${header('מה משמח אותי')}
+      <p class="muted" style="margin:-8px 0 0">כשמישהו ישלח ${me('לך', 'לך', 'לכם')} קארמה טובה, הוא יראה את זה ויידע מה לבחור.</p>
+      <label class="field">הקפה שלי<input class="input" id="coffee" maxlength="40" value="${esc(f.coffee)}" placeholder="למשל: הפוך גדול על שיבולת שועל"></label>
+      <label class="field">המתוק שלי<input class="input" id="sweet" maxlength="40" value="${esc(f.sweet)}" placeholder="למשל: גלידת פיסטוק, בלי רוטב"></label>
+      <section class="col"><h3>המקומות שלי</h3><div class="wrap">${PLACES.map((p) => `<button class="chip" data-place="${esc(p)}" aria-pressed="${f.places.includes(p)}">${esc(p)}</button>`).join('')}</div></section>
+      <section class="col"><h3>עוד דברים ${me('שאני אוהבת', 'שאני אוהב', 'שאנחנו אוהבים')}</h3><div class="wrap">${TAGS.map((p) => `<button class="chip" data-tag="${esc(p)}" aria-pressed="${f.tags.includes(p)}">${esc(p)}</button>`).join('')}</div></section>
+      <div class="check" style="justify-content:space-between"><span>יום ההולדת שלי<span class="sub">רק החברים יראו, בלי שנה</span></span>
+        <span class="row" style="gap:6px"><select class="input" id="bd" style="width:70px;height:44px;padding:0 6px" aria-label="יום"><option value="">יום</option>${Array.from({ length: 31 }, (_, i) => `<option ${Number(bd) === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
+        <select class="input" id="bm" style="width:110px;height:44px;padding:0 6px" aria-label="חודש"><option value="">חודש</option>${MONTHS.map((m, i) => `<option value="${i + 1}" ${Number(bm) === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></span></div>
+      <p class="card peach flat small" id="modwarn" role="alert" hidden style="margin:0"></p>
+      <div class="stack-bottom"><button class="btn pink" id="save">לשמור</button></div>`);
+    wireBack('good');
+    const toggle = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+    on('[data-place]', 'click', (e) => { f.places = toggle(f.places, e.currentTarget.dataset.place); e.currentTarget.setAttribute('aria-pressed', f.places.includes(e.currentTarget.dataset.place)); });
+    on('[data-tag]', 'click', (e) => { f.tags = toggle(f.tags, e.currentTarget.dataset.tag); e.currentTarget.setAttribute('aria-pressed', f.tags.includes(e.currentTarget.dataset.tag)); });
+    const $save = $app.querySelector('#save'); const $warn = $app.querySelector('#modwarn');
+    const validate = () => { $save.disabled = !!modWarn($warn, $app.querySelector('#coffee').value + ' ' + $app.querySelector('#sweet').value); };
+    on('#coffee', 'input', validate); on('#sweet', 'input', validate);
+    $save.onclick = async () => {
+      const d = $app.querySelector('#bd').value, m = $app.querySelector('#bm').value;
+      const birthday = d && m ? `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` : '';
+      const likes = { coffee: $app.querySelector('#coffee').value.trim(), sweet: $app.querySelector('#sweet').value.trim(), places: f.places, tags: f.tags };
+      try { await api.updateLikes(likes, birthday); api.log('wishlist_saved', { n: f.places.length + f.tags.length }); toast('נשמר. עכשיו כולם יודעים'); go('good'); } catch (err) { toast(errText(err)); }
+    };
+  }
+
+  // ───────────── Group card ("shared pot") ─────────────
+  async function screenCardNew() {
+    loading();
+    await loadFriends();
+    if (!state.friends.length) return noFriends('קופה משותפת');
+    const TITLES = ['מגש פירות ליולדת', 'בירה אחרי הפרידה', 'עוגה ליום ההולדת', 'משהו קטן להחלמה', 'מזל טוב על העבודה החדשה'];
+    const f = { recipient: null, title: '', closes: '1', message: '', invitees: [] };
+    const draw = () => {
+      const r = friendById(f.recipient);
+      const others = state.friends.filter((x) => x.id !== f.recipient);
+      render(`
+        <header class="top"><div class="col" style="gap:2px"><span class="display ltr" style="font-size:13px;color:#C2185B;text-align:right">GROUP KARMA</span><h1>קופה משותפת</h1></div>
+          <button class="icon-btn" data-back aria-label="סגירה">${ICON.close}</button></header>
+        <section class="col"><h3>בשביל מי?</h3>${friendPicker(f.recipient, 'data-r')}</section>
+        <section class="col"><h3>מה הסיפור?</h3><div class="wrap">${TITLES.map((t) => `<button class="chip" data-t="${esc(t)}" aria-pressed="${f.title === t}">${esc(t)}</button>`).join('')}</div>
+          <input class="input" id="title" maxlength="60" value="${esc(f.title)}" placeholder="או לכתוב לבד"></section>
+        ${f.recipient ? `<section class="col"><h3>מי עוד בפנים?</h3>${others.length ? friendPicker(f.invitees, 'data-inv', others) : `<p class="small muted" style="margin:0">אין עוד חברים להזמין. אפשר להזמין חברים חדשים ל-KARMA.</p>`}</section>` : ''}
+        <section class="col"><h3>עד מתי?</h3><div class="wrap">${[['1', 'מחר בערב'], ['3', 'עוד 3 ימים'], ['7', 'עוד שבוע']].map(([k, l]) => `<button class="chip" data-c="${k}" aria-pressed="${f.closes === k}">${l}</button>`).join('')}</div></section>
+        <label class="field">מה ${me('את כותבת', 'אתה כותב', 'אתם כותבים')}?<textarea class="input" id="msg" maxlength="140" placeholder="מזל טוב! הכי מגיע לך">${esc(f.message)}</textarea></label>
+        <div class="card lav flat small">בינתיים זה כרטיס ברכה קבוצתי: כולם כותבים, ו${r ? esc(r.display_name) : 'החבר'} ${G(r && r.pronoun, 'מקבלת', 'מקבל', 'מקבלים')} הכול ביחד. האפשרות להוסיף כסף לקופה תגיע בקרוב.</div>
+        <p class="card peach flat small" id="modwarn" role="alert" hidden style="margin:0"></p>
+        <button class="btn pink" id="send">לפתוח את הקופה</button>`, { theme: 'pink' });
+      wireBack('good');
+      const $send = $app.querySelector('#send'); const $warn = $app.querySelector('#modwarn');
+      const read = () => { f.title = $app.querySelector('#title').value; f.message = $app.querySelector('#msg').value; };
+      const validate = () => { read(); const bad = modWarn($warn, f.title + ' ' + f.message); $send.disabled = !!bad || !f.recipient || f.title.trim().length < 2; };
+      $app.querySelectorAll('input,textarea').forEach((i) => i.addEventListener('input', validate));
+      on('[data-r]', 'click', (e) => { read(); f.recipient = e.currentTarget.dataset.r; f.invitees = f.invitees.filter((x) => x !== f.recipient); draw(); });
+      on('[data-t]', 'click', (e) => { read(); f.title = e.currentTarget.dataset.t; draw(); });
+      on('[data-inv]', 'click', (e) => { read(); const v = e.currentTarget.dataset.inv; f.invitees = f.invitees.includes(v) ? f.invitees.filter((x) => x !== v) : [...f.invitees, v]; draw(); });
+      on('[data-c]', 'click', (e) => { read(); f.closes = e.currentTarget.dataset.c; draw(); });
+      validate();
+      $send.onclick = async () => {
+        read(); $send.disabled = true;
+        const d = new Date(Date.now() + Number(f.closes) * 864e5); d.setHours(20, 0, 0, 0);
+        try {
+          const id = await api.createGroupCard({ recipient: f.recipient, title: f.title.trim(), closesAt: d.toISOString(), message: f.message.trim(), invitees: f.invitees });
+          api.log('group_card_created', { invited: f.invitees.length });
+          toast('הקופה נפתחה. החברים קיבלו הזמנה'); go('card/' + id);
+        } catch (err) { toast(errText(err)); $send.disabled = false; }
+      };
+    };
+    draw();
+  }
+
+  async function screenCard(id) {
+    loading();
+    const [mine, forMe, msgs] = await Promise.all([api.myGroupCards(), api.groupCardsForMe(), api.groupCardMessages(id)]);
+    const c = mine.find((x) => x.id === id);
+    const rc = forMe.find((x) => x.id === id);
+    if (!c && !rc) return go('good');
+    if (rc && !c) {
+      api.log('group_card_opened');
+      render(`
+        <div class="ltr" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:10px">
+          <span class="display" style="font-size:40px;line-height:.95">Everyone's got</span>
+          <span class="display" style="font-size:52px;line-height:.95;color:var(--cream);-webkit-text-stroke:2px var(--ink)">YOUR BACK</span></div>
+        <section class="sticker" style="box-shadow:6px 6px 0 var(--ink)"><span class="small"><b>${rc.members} חברים ביחד</b></span><span class="display" style="font-size:24px">${esc(rc.title)}</span></section>
+        <div class="col">${msgs.filter((m) => m.joined).map((m) => `<div class="card row" style="align-items:flex-start;box-shadow:none">${av(m.name, m.color)}<div class="col" style="gap:2px"><b>${esc(m.name)}</b><span>${esc(m.message || '❤')}</span></div></div>`).join('')}</div>
+        <div class="stack-bottom"><a class="btn md white" href="#/good">חזרה</a></div>`, { theme: 'hotpink' });
+      return;
+    }
+    const pct = Math.round((c.joined_count / Math.max(1, c.members)) * 100);
+    const hoursLeft = Math.max(0, Math.round((new Date(c.closes_at) - Date.now()) / 36e5));
+    render(`
+      <header class="top"><div class="col" style="gap:2px"><span class="display ltr" style="font-size:13px;color:#C2185B;text-align:right">GROUP KARMA</span><h1>קופה משותפת</h1></div>
+        <button class="icon-btn" data-back aria-label="חזרה">${ICON.back}</button></header>
+      <section class="card hero pink">
+        <span class="small"><b>כל החבר'ה בשביל ${esc(c.recipient_name)}</b></span>
+        <span class="display" style="font-size:24px;line-height:1.1">${esc(c.title)}</span>
+        <div role="img" aria-label="${c.joined_count} מתוך ${c.members} בפנים" style="height:16px;border:2px solid var(--ink);border-radius:8px;background:var(--white);overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--lime)"></div></div>
+        <span class="small">${c.joined_count} מתוך ${c.members} בפנים · ${c.delivered ? 'נשלח!' : hoursLeft < 24 ? `נסגרת בעוד ${hoursLeft} שעות` : `נסגרת ${whenText(c.closes_at)}`}</span>
+      </section>
+      <div class="sec"><h2>מי כבר בפנים</h2></div>
+      <div class="col">${msgs.map((m) => `<div class="beef" style="box-shadow:none;${m.joined ? '' : 'border-style:dashed'}">${av(m.name, m.color)}<span class="body"><span class="reason">${esc(m.name)}</span><span class="meta">${m.joined ? (m.message ? `״${esc(m.message)}״` : 'בפנים') : 'עוד לא הצטרף/ה'}</span></span>${m.joined ? '<span class="tag lime">בפנים</span>' : ''}</div>`).join('')}</div>
+      ${!c.joined && !c.delivered ? `<label class="field">מה ${me('את כותבת', 'אתה כותב', 'אתם כותבים')} ל${esc(c.recipient_name)}?<textarea class="input" id="msg" maxlength="140" placeholder="הכי מגיע לך בעולם"></textarea></label>
+        <p class="card peach flat small" id="modwarn" role="alert" hidden style="margin:0"></p>` : ''}
+      <div class="stack-bottom">
+        ${!c.joined && !c.delivered ? '<button class="btn pink" id="join">להצטרף לקופה</button>' : ''}
+        ${c.i_created && !c.delivered ? `<button class="btn" id="deliver">לשלוח ל${esc(c.recipient_name)} עכשיו</button>` : ''}
+        <button class="btn md white" data-money>להוסיף כסף לקופה · בקרוב</button>
+      </div>`, { theme: 'pink' });
+    wireBack('good');
+    const $msg = $app.querySelector('#msg');
+    if ($msg) { const $warn = $app.querySelector('#modwarn'); $msg.addEventListener('input', () => { $app.querySelector('#join').disabled = !!modWarn($warn, $msg.value); }); }
+    on('#join', 'click', async (e) => { e.currentTarget.disabled = true; try { await api.joinGroupCard(id, $msg.value.trim()); api.log('group_card_joined'); toast('הצטרפת!'); screenCard(id); } catch (err) { toast(errText(err)); e.currentTarget.disabled = false; } });
+    on('#deliver', 'click', async () => {
+      const ok = await sheet(`לשלוח ל${c.recipient_name}?`, 'כל מה שנכתב עד עכשיו יישלח, ואי אפשר יהיה להוסיף אחר כך.', 'לשלוח', 'עוד לא');
+      if (!ok) return;
+      try { await api.deliverGroupCard(id); api.log('group_card_delivered', { members: c.joined_count }); toast('נשלח! איזה חברים'); screenCard(id); } catch (err) { toast(errText(err)); }
+    });
+    on('[data-money]', 'click', (e) => { api.log('gift_interest', { where: 'group_card' }); e.currentTarget.textContent = 'רשמנו שרצית. נעדכן'; e.currentTarget.disabled = true; });
+  }
+
+  // ───────────── Donation in someone's name (coming soon) ─────────────
+  async function screenDonate() {
+    await loadFriends();
+    api.log('donate_viewed');
+    const f = { occ: 'לזכר', to: null };
+    const draw = () => {
+      const t = friendById(f.to);
+      render(`
+        ${header('תרומה בשם מישהו')}
+        <p class="muted" style="margin:-8px 0 0">לרגעים שבהם קפה לא מתאים. התרומה עוברת לעמותה, והחבר מקבל הודעה שקטה.</p>
+        <span class="tag peach" style="align-self:flex-start">בקרוב</span>
+        <section class="col"><h3>מה הרגע?</h3><div class="wrap">${['לזכר', 'לרפואה שלמה', 'תקופה קשה', 'סתם כי'].map((o) => `<button class="chip" data-o="${o}" aria-pressed="${f.occ === o}">${o}</button>`).join('')}</div></section>
+        ${state.friends.length ? `<section class="col"><h3>בשם מי?</h3>${friendPicker(f.to, 'data-to')}</section>` : ''}
+        <article class="card col" style="gap:6px;box-shadow:none"><span class="micro muted"><b>ככה ${t ? esc(t.display_name) : 'החבר'} ${G(t && t.pronoun, 'תקבל', 'יקבל', 'יקבלו')} את זה</b></span>
+          <span class="display" style="font-size:16px;font-weight:700;line-height:1.35">״${esc((state.me || {}).display_name || '')} ${me('תרמה', 'תרם', 'תרמו')} ל[עמותה] ${f.occ === 'סתם כי' ? 'בשמך' : f.occ}. ${me('חושבת', 'חושב', 'חושבים')} עליך.״</span>
+          <span class="micro muted">בלי צלילים, בלי קונפטי, בלי סכום</span></article>
+        <div class="stack-bottom"><button class="btn dark" data-want>אני רוצה שזה יהיה פה</button>
+          <span class="micro muted center">אנחנו בוחרים עכשיו את העמותות. ככה נדע כמה זה חשוב לכם.</span></div>`, { theme: 'lav' });
+      wireBack('good');
+      on('[data-o]', 'click', (e) => { f.occ = e.currentTarget.dataset.o; draw(); });
+      on('[data-to]', 'click', (e) => { f.to = e.currentTarget.dataset.to; draw(); });
+      on('[data-want]', 'click', (e) => { api.log('donate_interest', { occasion: f.occ }); e.currentTarget.disabled = true; e.currentTarget.textContent = 'רשמנו. תודה שאכפת לך'; });
+    };
+    draw();
+  }
+
+  // ───────────── KARMA. for Work (interest) ─────────────
+  function screenWork() {
+    api.log('work_viewed');
+    const f = { holidays: ['ראש השנה'] };
+    render(`
+      <header class="top"><span class="display ltr" style="font-size:13px;padding:5px 10px;border-radius:10px;background:var(--ink);color:var(--cream)">KARMA. for Work</span>
+        <button class="icon-btn" data-back aria-label="חזרה">${ICON.back}</button></header>
+      <section class="card hero lime"><span class="display" style="font-size:28px;line-height:1.05">שי לחג שהעובדים<br>באמת ישמחו בו</span>
+        <span class="small">כל עובד מקבל הודעה אישית מהמנהל ומהצוות, ובוחר לבד את המתנה.</span></section>
+      <div class="col small" style="gap:6px"><span>· מתנות לראש השנה, פסח, סוף שנה וימי הולדת</span><span>· הצוות שולח תודות וקפה אחד לשני, והחברה משלמת</span><span>· בלי רשימות אקסל ובלי שוברים שנשכחים במגירה</span></div>
+      <label class="field">שם החברה<input class="input" id="co" maxlength="60" placeholder="[שם החברה]"></label>
+      <label class="field">כמה עובדים?<select class="input" id="size"><option>עד 20</option><option>20–100</option><option>100–500</option><option>500+</option></select></label>
+      <section class="col"><h3>לאילו רגעים?</h3><div class="wrap">${['ראש השנה', 'פסח', 'סוף שנה', 'ימי הולדת', 'תודות שוטפות'].map((h) => `<button class="chip" data-h="${h}" aria-pressed="${f.holidays.includes(h)}">${h}</button>`).join('')}</div></section>
+      <div class="stack-bottom"><button class="btn" id="go">דברו איתי</button><span class="micro muted center">נחזור ${me('אלייך', 'אליך', 'אליכם')} למייל שאיתו ${me('נכנסת', 'נכנסת', 'נכנסתם')}</span></div>`);
+    on('[data-back]', 'click', () => back('profile'));
+    on('[data-h]', 'click', (e) => { const h = e.currentTarget.dataset.h; f.holidays = f.holidays.includes(h) ? f.holidays.filter((x) => x !== h) : [...f.holidays, h]; e.currentTarget.setAttribute('aria-pressed', f.holidays.includes(h)); });
+    on('#go', 'click', (e) => {
+      api.log('work_lead', { company: $app.querySelector('#co').value.trim().slice(0, 60), size: $app.querySelector('#size').value, holidays: f.holidays });
+      e.currentTarget.disabled = true; e.currentTarget.textContent = 'קיבלנו! נחזור אלייך בקרוב'; toast('תודה! נהיה בקשר');
+    });
+  }
+
   // ───────────────────────── router ─────────────────────────
   state.navCount = 0;
   async function route() {
@@ -795,6 +1483,20 @@
         case 'profile': return screenProfile();
         case 'edit': return screenOnboarding(true);
         case 'gifts': return screenGifts();
+        case 'bets': return screenBets();
+        case 'bet-new': return screenBetNew();
+        case 'bet': return screenBet(arg);
+        case 'good': return screenGood();
+        case 'good-new': return screenGoodNew({ to: arg });
+        case 'compliment': return screenGoodNew({ to: arg, compliment: true });
+        case 'pass': return screenGoodNew({ passFrom: arg });
+        case 'karma': return screenKarma(arg);
+        case 'friend': return screenFriend(arg);
+        case 'wishlist': return screenWishlist();
+        case 'card-new': return screenCardNew();
+        case 'card': return screenCard(arg);
+        case 'donate': return screenDonate();
+        case 'work': return screenWork();
         default: return go('');
       }
     } catch (e) {
@@ -804,7 +1506,7 @@
   }
 
   // Refresh home when data changes (demo replies) or the app comes back to the foreground.
-  const refreshable = () => ['', 'onme', 'mine'].includes(location.hash.replace(/^#\/?/, '').split('/')[0]);
+  const refreshable = () => ['', 'onme', 'mine', 'bets', 'bet', 'good', 'card'].includes(location.hash.replace(/^#\/?/, '').split('/')[0]);
   window.addEventListener('karma:changed', () => { if (refreshable() && !document.querySelector('.sheet-bg')) route(); toast('יש עדכון ב-KARMA.'); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && refreshable() && api.signedIn() && state.me) route(); });
   setInterval(() => { if (!document.hidden && !api.demo && refreshable() && api.signedIn() && state.me && !document.querySelector('.sheet-bg')) route(); }, 45000);

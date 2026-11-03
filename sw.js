@@ -1,6 +1,6 @@
 // Minimal service worker: lets the app be installed and opens fast.
 // App files: network first (so updates show up), cached copy when offline.
-const CACHE = 'karma-v2';
+const CACHE = 'karma-v3';
 const FILES = ['./', 'index.html', 'app.css', 'app.js', 'api.js', 'moderation.js', 'config.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
