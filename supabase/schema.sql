@@ -74,7 +74,192 @@ create table if not exists public.blocks (
   primary key (blocker, blocked)
 );
 
--- Guard rails on insert: friends only, not blocked, max 3 open beefs per pair.
+-- ───────────────────────── text filter ─────────────────────────
+-- Generated from moderation.js (same lists the app uses). Terms are stored already normalized.
+create table if not exists public.moderation_terms (
+  term     text not null,
+  mode     text not null check (mode in ('contains', 'word')),
+  category text not null,
+  primary key (term, mode)
+);
+alter table public.moderation_terms enable row level security;
+delete from public.moderation_terms;
+insert into public.moderation_terms (term, mode, category) values
+  ('אהרוג', 'contains', 'violence'),
+  ('להרוג', 'contains', 'violence'),
+  ('יהרוג', 'contains', 'violence'),
+  ('תהרוג', 'contains', 'violence'),
+  ('נהרוג', 'contains', 'violence'),
+  ('ארצח', 'contains', 'violence'),
+  ('לרצוח', 'contains', 'violence'),
+  ('רוצח', 'contains', 'violence'),
+  ('ירצח', 'contains', 'violence'),
+  ('אשבורלכ', 'contains', 'violence'),
+  ('אשבוראותכ', 'contains', 'violence'),
+  ('לשבורלכ', 'contains', 'violence'),
+  ('אשבורלה', 'contains', 'violence'),
+  ('אשבורלו', 'contains', 'violence'),
+  ('ארביצ', 'contains', 'violence'),
+  ('להרביצ', 'contains', 'violence'),
+  ('נרביצ', 'contains', 'violence'),
+  ('מרביצימ', 'contains', 'violence'),
+  ('אדקור', 'contains', 'violence'),
+  ('לדקור', 'contains', 'violence'),
+  ('נדקור', 'contains', 'violence'),
+  ('סכינ', 'contains', 'violence'),
+  ('אקדח', 'contains', 'violence'),
+  ('לירותב', 'contains', 'violence'),
+  ('אירהב', 'contains', 'violence'),
+  ('יריות', 'contains', 'violence'),
+  ('לפוצצאות', 'contains', 'violence'),
+  ('אפוצצ', 'contains', 'violence'),
+  ('לחנוק', 'contains', 'violence'),
+  ('אחנוק', 'contains', 'violence'),
+  ('שתמות', 'contains', 'violence'),
+  ('תמותי', 'contains', 'violence'),
+  ('שתמותי', 'contains', 'violence'),
+  ('תמותו', 'contains', 'violence'),
+  ('תתאבד', 'contains', 'violence'),
+  ('להתאבד', 'contains', 'violence'),
+  ('לכתתלה', 'contains', 'violence'),
+  ('תתליאתעצמכ', 'contains', 'violence'),
+  ('לאנוס', 'contains', 'violence'),
+  ('אונס', 'contains', 'violence'),
+  ('אנסו', 'contains', 'violence'),
+  ('killyou', 'contains', 'violence'),
+  ('killyour', 'contains', 'violence'),
+  ('killyourself', 'contains', 'violence'),
+  ('gonnakill', 'contains', 'violence'),
+  ('rape', 'contains', 'violence'),
+  ('shootyou', 'contains', 'violence'),
+  ('stab', 'contains', 'violence'),
+  ('רצח', 'word', 'violence'),
+  ('מכות', 'word', 'violence'),
+  ('תמות', 'word', 'violence'),
+  ('kys', 'word', 'violence'),
+  ('עושימחרמ', 'contains', 'ostracism'),
+  ('לעשותחרמ', 'contains', 'ostracism'),
+  ('נעשהחרמ', 'contains', 'ostracism'),
+  ('חרמעל', 'contains', 'ostracism'),
+  ('להחרימ', 'contains', 'ostracism'),
+  ('מחרימימ', 'contains', 'ostracism'),
+  ('נחרימ', 'contains', 'ostracism'),
+  ('כולמשונאימ', 'contains', 'ostracism'),
+  ('כולנושונאימ', 'contains', 'ostracism'),
+  ('כולמצוחקימעליכ', 'contains', 'ostracism'),
+  ('כולמצוחקימעלייכ', 'contains', 'ostracism'),
+  ('אפאחדלאאוהב', 'contains', 'ostracism'),
+  ('אפאחדלארוצהאות', 'contains', 'ostracism'),
+  ('אלתדברואיתה', 'contains', 'ostracism'),
+  ('אלתדברואיתו', 'contains', 'ostracism'),
+  ('אלתזמינו', 'contains', 'ostracism'),
+  ('לאמגיעלכלחיות', 'contains', 'ostracism'),
+  ('עופימפה', 'contains', 'ostracism'),
+  ('עופמפה', 'contains', 'ostracism'),
+  ('תעלמימהעולמ', 'contains', 'ostracism'),
+  ('תעלממהעולמ', 'contains', 'ostracism'),
+  ('עדיפבלעדיכ', 'contains', 'ostracism'),
+  ('עדיפבלעדייכ', 'contains', 'ostracism'),
+  ('nobodylikesyou', 'contains', 'ostracism'),
+  ('everyonehatesyou', 'contains', 'ostracism'),
+  ('חרמ', 'word', 'ostracism'),
+  ('בחרמ', 'word', 'ostracism'),
+  ('לחרמ', 'word', 'ostracism'),
+  ('ערבוש', 'contains', 'hate'),
+  ('כושי', 'contains', 'hate'),
+  ('כושית', 'contains', 'hate'),
+  ('כושימ', 'contains', 'hate'),
+  ('קוקסינל', 'contains', 'hate'),
+  ('מתרוממ', 'contains', 'hate'),
+  ('נאצי', 'contains', 'hate'),
+  ('היטלר', 'contains', 'hate'),
+  ('יהודונ', 'contains', 'hate'),
+  ('מחבלמסריח', 'contains', 'hate'),
+  ('מפגר', 'contains', 'hate'),
+  ('מפגרת', 'contains', 'hate'),
+  ('מפגרימ', 'contains', 'hate'),
+  ('אוטיסטמ', 'contains', 'hate'),
+  ('nigg', 'contains', 'hate'),
+  ('faggot', 'contains', 'hate'),
+  ('retard', 'contains', 'hate'),
+  ('tranny', 'contains', 'hate'),
+  ('הומו', 'word', 'hate'),
+  ('הומואימ', 'word', 'hate'),
+  ('fag', 'word', 'hate'),
+  ('זונה', 'contains', 'sexual'),
+  ('שרמוטה', 'contains', 'sexual'),
+  ('שרמוט', 'contains', 'sexual'),
+  ('כוסאמא', 'contains', 'sexual'),
+  ('כוסאמק', 'contains', 'sexual'),
+  ('כוסעמק', 'contains', 'sexual'),
+  ('כוסית', 'contains', 'sexual'),
+  ('בנזונה', 'contains', 'sexual'),
+  ('בתזונה', 'contains', 'sexual'),
+  ('מזדיינ', 'contains', 'sexual'),
+  ('תזדיינ', 'contains', 'sexual'),
+  ('תזדייני', 'contains', 'sexual'),
+  ('לזיינ', 'contains', 'sexual'),
+  ('מזיינ', 'contains', 'sexual'),
+  ('זיונ', 'contains', 'sexual'),
+  ('ציצימ', 'contains', 'sexual'),
+  ('מניאק', 'contains', 'sexual'),
+  ('מניאקית', 'contains', 'sexual'),
+  ('חתיכתזבל', 'contains', 'sexual'),
+  ('חתיכתחרא', 'contains', 'sexual'),
+  ('fuck', 'contains', 'sexual'),
+  ('bitch', 'contains', 'sexual'),
+  ('slut', 'contains', 'sexual'),
+  ('whore', 'contains', 'sexual'),
+  ('cunt', 'contains', 'sexual'),
+  ('dick', 'contains', 'sexual'),
+  ('זינ', 'word', 'sexual'),
+  ('זיינ', 'word', 'sexual'),
+  ('sex', 'word', 'sexual'),
+  ('סקס', 'word', 'sexual'),
+  ('מכוערת', 'contains', 'body'),
+  ('מכוער', 'contains', 'body'),
+  ('שמנה', 'contains', 'body'),
+  ('שמנימ', 'contains', 'body'),
+  ('שמנמנה', 'contains', 'body'),
+  ('אנורקסית', 'contains', 'body'),
+  ('פרצופשלחזיר', 'contains', 'body'),
+  ('חזירה', 'contains', 'body'),
+  ('דובהשמנה', 'contains', 'body'),
+  ('אתהשמנ', 'contains', 'body'),
+  ('שמנכמו', 'contains', 'body'),
+  ('שמנומכוער', 'contains', 'body'),
+  ('שמנמגעיל', 'contains', 'body'),
+  ('פרה', 'word', 'body'),
+  ('ugly', 'word', 'body'),
+  ('fat', 'word', 'body');
+
+-- Same normalization as moderation.js: lowercase, no vowel marks, final letters → regular,
+-- look-alike digits/symbols → letters, letters repeated 3+ times → once.
+create or replace function public.mod_normalize(t text)
+returns text language sql immutable as $$
+  select regexp_replace(
+           translate(regexp_replace(lower(coalesce(t, '')), '[\u0591-\u05C7]', '', 'g'),
+                     'ךםןףץ013457@$', 'כמנפצoieastas'),
+           '(.)\1\1+', '\1', 'g');
+$$;
+
+-- Returns the matched category, or null when the text is fine.
+create or replace function public.moderation_check(t text)
+returns text language sql stable security definer set search_path = public as $$
+  with n as (select mod_normalize(t) as n),
+       c as (select regexp_replace(n, '[^a-zא-ת]', '', 'g') as c from n),
+       w as (select unnest(regexp_split_to_array(n, '[^a-zא-ת]+')) as w from n),
+       v as (select w from w where w <> ''
+             union select substr(w, 2) from w where length(w) > 3 and strpos('והש', left(w, 1)) > 0
+             union select substr(w, 3) from w where length(w) > 4 and strpos('והש', left(w, 1)) > 0
+                                                 and strpos('והש', substr(w, 2, 1)) > 0)
+  select m.category from moderation_terms m, c
+  where (m.mode = 'contains' and strpos(c.c, m.term) > 0)
+     or (m.mode = 'word' and m.term in (select w from v))
+  limit 1;
+$$;
+
+-- Guard rails on insert: friends only, not blocked, clean text, no pile-ons, max 3 open beefs per pair.
 create or replace function public.beef_insert_guard()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
@@ -82,6 +267,23 @@ begin
   if not are_friends(new.creator, new.target) then raise exception 'not_friends'; end if;
   if exists (select 1 from blocks where blocker = new.target and blocked = new.creator) then
     raise exception 'blocked';
+  end if;
+  if moderation_check(new.reason) is not null then
+    raise exception 'moderation:%', moderation_check(new.reason);
+  end if;
+  -- Someone whose beefs were reported twice in 30 days is paused.
+  if (select count(distinct r.beef_id) from reports r join beefs b on b.id = r.beef_id
+      where b.creator = new.creator and r.created_at > now() - interval '30 days') >= 2 then
+    raise exception 'paused';
+  end if;
+  -- At most 8 new beefs a day per person.
+  if (select count(*) from beefs where creator = new.creator and created_at > now() - interval '24 hours') >= 8 then
+    raise exception 'slow_down';
+  end if;
+  -- Pile-on protection: if 4 different people opened a beef on the same person in 48 hours, wait.
+  if (select count(distinct creator) from beefs where target = new.target and creator <> new.creator
+      and created_at > now() - interval '48 hours') >= 4 then
+    raise exception 'cooldown';
   end if;
   if (select count(*) from beefs where creator = new.creator and target = new.target
       and status in ('pending', 'in_progress')) >= 3 then
@@ -179,6 +381,7 @@ returns public.profiles language plpgsql security definer set search_path = publ
 declare r profiles;
 begin
   if not p_age then raise exception 'age_required'; end if;
+  if moderation_check(p_name) is not null then raise exception 'moderation:%', moderation_check(p_name); end if;
   insert into profiles (id, display_name, pronoun, color, age_confirmed)
   values (auth.uid(), p_name, p_pronoun, p_color, true)
   on conflict (id) do update set display_name = excluded.display_name, pronoun = excluded.pronoun,
@@ -275,6 +478,7 @@ begin
   select * into b from beefs where id = p_beef;
   if b.id is null or auth.uid() not in (b.creator, b.target) then raise exception 'not allowed'; end if;
   if b.status not in ('pending', 'in_progress') then raise exception 'closed'; end if;
+  if moderation_check(p_message) is not null then raise exception 'moderation:%', moderation_check(p_message); end if;
   insert into offers (beef_id, from_user, offer_type, message) values (p_beef, auth.uid(), p_type, p_message)
   returning id into oid;
   update beefs set status = 'in_progress' where id = p_beef;

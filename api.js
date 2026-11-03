@@ -129,8 +129,10 @@
     resetDemo() { localStorage.removeItem(KEY); }
 
     getProfile() { return this.wait(this.s.me); }
+    modCheck(t) { const c = window.KarmaModeration && window.KarmaModeration.check(t); if (c) throw new Error('moderation:' + c); }
     upsertProfile(name, pronoun, color, age) {
       if (!age) throw new Error('age_required');
+      this.modCheck(name);
       this.s.me = { id: 'me', display_name: name, pronoun, color, age_confirmed: true };
       this.save(); return this.wait(this.s.me);
     }
@@ -172,6 +174,7 @@
     createBeef(b) {
       const open = this.s.beefs.filter((x) => x.creator === 'me' && x.target === b.target && ['pending', 'in_progress'].includes(x.status)).length;
       if (open >= 3) throw new Error('too_many_open');
+      this.modCheck(b.reason);
       const id = uid();
       this.s.beefs.push({ id, creator: 'me', target: b.target, kind: b.kind, reason: b.reason, spice: b.spice, anonymous: b.anonymous, revealed: false, status: 'pending', created_at: now(), closed_at: null });
       this.save();
@@ -190,6 +193,7 @@
     makeOffer(beefId, type, message) {
       const b = this.beef(beefId);
       if (!b || !['pending', 'in_progress'].includes(b.status)) throw new Error('closed');
+      this.modCheck(message);
       const id = uid();
       this.s.offers.push({ id, beef_id: beefId, from_user: 'me', offer_type: type, message, status: 'open', created_at: now() });
       b.status = 'in_progress'; this.save();

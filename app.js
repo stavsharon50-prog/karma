@@ -104,8 +104,28 @@
     setTimeout(() => t.remove(), 3200);
   }
 
+  // Friendly explanation when the text filter stops something.
+  const MOD_MSG = {
+    violence: 'זה נשמע כמו איום, גם אם בצחוק. ב-KARMA. סוגרים חשבון על צ׳יפס, לא במכות.',
+    ostracism: 'זה נשמע כמו להוציא מישהו מהחבורה. פה סוגרים חשבונות, לא מחרימים.',
+    hate: 'יש פה מילה שפוגעת במי שהאדם הוא. את זה לא שולחים.',
+    sexual: 'בלי קללות ובלי מיניות. נסו לנסח את זה מצחיק יותר.',
+    body: 'בלי הערות על איך מישהו נראה. זה אף פעם לא באמת מצחיק.',
+  };
+  const modCheck = (t) => (window.KarmaModeration ? window.KarmaModeration.check(t) : null);
+  function modWarn($el, text) {
+    const cat = modCheck(text);
+    $el.hidden = !cat; $el.textContent = cat ? MOD_MSG[cat] : '';
+    return cat;
+  }
+
   function errText(e) {
     const m = (e && e.message) || '';
+    const mod = m.match(/moderation:(\w+)/);
+    if (mod) return MOD_MSG[mod[1]] || MOD_MSG.sexual;
+    if (m.includes('cooldown')) return 'החבר הזה קיבל הרבה טינות בזמן האחרון. נותנים לו לנשום כמה ימים.';
+    if (m.includes('slow_down')) return 'הגעת למקסימום הטינות להיום. מחר עוד יום.';
+    if (m.includes('paused')) return 'כמה טינות שלך דווחו לאחרונה, אז פתיחת טינות חדשות מושהית לכמה ימים.';
     if (m.includes('too_many_open')) return 'כבר יש 3 חשבונות פתוחים עם החבר הזה. קודם לסגור משהו.';
     if (m.includes('not_friends')) return 'אפשר להוסיף רק חברים שאישרו אותך.';
     if (m.includes('blocked')) return 'אי אפשר לפתוח חשבון עם החבר הזה כרגע.';
@@ -212,7 +232,8 @@
     if (editing) wireBack('profile');
     const $save = $app.querySelector('#save');
     const validate = () => {
-      const ok = $app.querySelector('#name').value.trim().length > 0 && (editing || $app.querySelector('#age').checked);
+      const bad = modCheck($app.querySelector('#name').value);
+      const ok = !bad && $app.querySelector('#name').value.trim().length > 0 && (editing || $app.querySelector('#age').checked);
       $save.disabled = !ok;
     };
     on('#name', 'input', validate); on('#age', 'change', validate); validate();
@@ -413,6 +434,7 @@
       <label class="field">הודעה ${blind ? 'למי שזה לא יהיה' : ''} (לא חובה)
         <textarea class="input" id="msg" maxlength="120" placeholder="למשל: סליחה. מעכשיו לייק על כל סטורי"></textarea>
       </label>
+      <p class="card peach flat small" id="modwarn" role="alert" hidden style="margin:0"></p>
       <div class="col" style="gap:8px">
         <button class="btn" id="send" disabled>${blind ? 'לשלוח הסדר עיוור' : 'לשלוח הצעה'}</button>
         <p class="micro muted center" style="margin:0">רוצה לסגור עם מתנה אמיתית? <a href="#/gifts">Karma Gifts בקרוב</a></p>
@@ -420,7 +442,8 @@
     wireBack(blind ? '' : 'onme');
     const $send = $app.querySelector('#send');
     const $msg = $app.querySelector('#msg');
-    const validate = () => { $send.disabled = !pick || (pick === 'custom' && !$msg.value.trim()); };
+    const $warn = $app.querySelector('#modwarn');
+    const validate = () => { const bad = modWarn($warn, $msg.value); $send.disabled = !pick || (pick === 'custom' && !$msg.value.trim()) || !!bad; };
     on('[data-offer]', 'click', (e) => {
       pick = e.currentTarget.dataset.offer;
       $app.querySelectorAll('[data-offer]').forEach((x) => x.setAttribute('aria-pressed', x.dataset.offer === pick));
@@ -450,7 +473,8 @@
         <div class="stack-bottom"><a class="btn" href="#/friends">להזמין חברים</a></div>`);
       wireBack(''); return;
     }
-    const f = { target: state.addTarget || null, kind: 'beef', reason: null, spice: 2, anonymous: true };
+    const f = { target: state.addTarget || null, kind: 'beef', reason: null, custom: '', spice: 2, anonymous: true };
+    const finalReason = () => (f.custom.trim() || f.reason || '');
     state.addTarget = null;
     const draw = () => {
       const t = friendById(f.target);
@@ -466,27 +490,46 @@
           <div class="wrap">${Object.entries(KINDS).map(([k, v]) => `<button class="tab" role="tab" data-kind="${k}" aria-selected="${f.kind === k}">${v.label}</button>`).join('')}</div>
         </section>
         <section class="col"><h3>3 · מה קרה?</h3>
-          <div class="wrap">${reasons.map((r) => `<button class="chip" data-reason="${esc(r)}" aria-pressed="${f.reason === r}">${esc(r)}</button>`).join('')}</div>
+          <div class="wrap">${reasons.map((r) => `<button class="chip" data-reason="${esc(r)}" aria-pressed="${!f.custom.trim() && f.reason === r}">${esc(r)}</button>`).join('')}</div>
+          <label class="field" style="font-weight:500">משהו אחר? עד 60 תווים
+            <input class="input" id="custom" maxlength="60" autocomplete="off" value="${esc(f.custom)}" placeholder="למשל: עשתה ספוילר לגמר" style="border-style:dashed">
+          </label>
+          <p class="card peach flat small" id="modwarn" role="alert" hidden style="margin:0"></p>
         </section>
         <section class="col"><h3>4 · כמה חריף?</h3>
           <div class="grid3">${[1, 2, 3].map((n) => `<button class="spice" data-spice="${n}" aria-pressed="${f.spice === n}">${chilis(n)}<span>${SPICE[n]}</span></button>`).join('')}</div>
         </section>
         <label class="check"><input type="checkbox" id="anon" ${f.anonymous ? 'checked' : ''}>
           <span style="flex:1">להישאר ${me('אנונימית', 'אנונימי', 'אנונימיים')}<span class="sub">${t ? `${esc(t.display_name)} ${G(pron, 'תדע', 'ידע', 'ידעו')}` : 'ידעו'} שזה ממך רק אם ${me('תסכימי', 'תסכים', 'תסכימו')} לחשוף</span></span></label>
-        <button class="btn" id="send" ${f.target && f.reason ? '' : 'disabled'}>לשלוח לקארמה</button>`);
+        <button class="btn" id="send" disabled>לשלוח לקארמה</button>`);
       wireBack('');
       on('[data-target]', 'click', (e) => { f.target = e.currentTarget.dataset.target; draw(); });
       on('[data-kind]', 'click', (e) => { f.kind = e.currentTarget.dataset.kind; f.reason = null; draw(); });
-      on('[data-reason]', 'click', (e) => { f.reason = e.currentTarget.dataset.reason; draw(); });
+      on('[data-reason]', 'click', (e) => { f.reason = e.currentTarget.dataset.reason; f.custom = ''; draw(); });
+      const $send = $app.querySelector('#send');
+      const $warn = $app.querySelector('#modwarn');
+      const validate = () => {
+        const bad = modWarn($warn, f.custom);
+        $send.disabled = !f.target || finalReason().length < 2 || !!bad;
+      };
+      on('#custom', 'input', (e) => {
+        f.custom = e.currentTarget.value;
+        $app.querySelectorAll('[data-reason]').forEach((x) => x.setAttribute('aria-pressed', !f.custom.trim() && f.reason === x.dataset.reason));
+        validate();
+      });
+      validate();
       on('[data-spice]', 'click', (e) => { f.spice = Number(e.currentTarget.dataset.spice); draw(); });
       on('#anon', 'change', (e) => { f.anonymous = e.currentTarget.checked; draw(); });
       on('#send', 'click', async (e) => {
         e.currentTarget.disabled = true;
         try {
-          const id = await api.createBeef(f);
-          api.log('beef_created', { kind: f.kind, spice: f.spice, anonymous: f.anonymous });
+          const id = await api.createBeef({ ...f, reason: finalReason() });
+          api.log('beef_created', { kind: f.kind, spice: f.spice, anonymous: f.anonymous, custom: !!f.custom.trim() });
           go('sent/' + id);
-        } catch (err) { toast(errText(err)); e.currentTarget.disabled = false; }
+        } catch (err) {
+          if (/moderation/.test(err.message)) api.log('moderation_blocked', { where: 'beef', category: (err.message.match(/moderation:(\w+)/) || [])[1] });
+          toast(errText(err)); e.currentTarget.disabled = false;
+        }
       });
     };
     draw();
@@ -692,7 +735,8 @@
         <span>· רק חברים שנכנסו מהלינק שלך יכולים להוסיף אותך.</span>
         <span>· טינה אנונימית נחשפת רק אם שני הצדדים מסכימים.</span>
         <span>· ״זה לא מצחיק אותי״ מוחק טינה מיד.</span>
-        <span>· אפשר לבחור רק מתוך סיבות מוכנות, בלי טקסט חופשי.</span>
+        <span>· כל טקסט עובר סינון: קללות, איומים, גזענות וחרם לא נשלחים.</span>
+        <span>· אם הרבה אנשים פותחים טינה על אותו אדם בבת אחת, המערכת עוצרת את זה.</span>
       </section>
       <div class="stack-bottom">
         <button class="btn md white" data-reset>איפוס קארמה</button>
