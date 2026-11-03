@@ -176,7 +176,7 @@
         <span class="small muted">הדרך הכי מצחיקה לסגור חשבונות קטנים עם חברים</span>
       </div>`}
       <div class="stack-bottom">
-        <button class="btn google" data-google>${ICON.google}<span>כניסה עם Google</span></button>
+        ${api.demo ? '<button class="btn" data-google>יאללה, נכנסים</button>' : `<button class="btn google" data-google>${ICON.google}<span>כניסה עם Google</span></button>`}
         <p class="micro muted center" style="margin:0">רק חברים שאישרו אותך יכולים להוסיף אותך לרשימה. תמיד.<br>הכניסה מגיל 18.</p>
       </div>`);
     on('[data-google]', 'click', async (e) => {
