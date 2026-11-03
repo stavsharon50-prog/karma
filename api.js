@@ -124,8 +124,8 @@
 
     signedIn() { return this.s.signedIn; }
     googleName() { return ''; }
-    async signIn() { this.s.signedIn = true; this.save(); location.reload(); }
-    async signOut() { localStorage.removeItem(KEY); this.s = seed(); }
+    async signIn() { this.s.signedIn = true; this.save(); window.dispatchEvent(new Event('hashchange')); }
+    async signOut() { try { localStorage.removeItem(KEY); } catch (e) {} this.s = seed(); }
     resetDemo() { localStorage.removeItem(KEY); }
 
     getProfile() { return this.wait(this.s.me); }
