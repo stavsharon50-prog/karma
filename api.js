@@ -111,6 +111,13 @@
     myGroupCards() { return this.rpc('my_group_cards'); }
     groupCardsForMe() { return this.rpc('group_cards_for_me'); }
     groupCardMessages(id) { return this.rpc('group_card_messages', { p_card: id }); }
+    // notifications & wallet
+    myNotifications() { return this.rpc('my_notifications'); }
+    async deleteAccount() { await this.rpc('delete_my_account'); await this.signOut(); }
+    unreadCount() { return this.rpc('unread_count'); }
+    markNotificationsRead() { return this.rpc('mark_notifications_read'); }
+    myWallet() { return this.rpc('my_wallet'); }
+    markOfferFulfilled(id) { return this.rpc('mark_offer_fulfilled', { p_offer: id }); }
     log(name, props) {
       if (!this.user) return;
       this.sb.from('events').insert({ user_id: this.user.id, name, props: props || {} }).then(() => {}, () => {});
@@ -139,9 +146,11 @@
         { id: 'b1', creator: 'f-maya', target: 'me', kind: 'beef', reason: 'ראית סטורי ולא עשית לייק', spice: 2, anonymous: true, revealed: false, status: 'pending', created_at: ago(20), closed_at: null },
         { id: 'b2', creator: 'f-itai', target: 'me', kind: 'debt', reason: 'הקפה מיוני עדיין פתוח', spice: 1, anonymous: false, revealed: false, status: 'pending', created_at: ago(70), closed_at: null },
         { id: 'b3', creator: 'me', target: 'f-maya', kind: 'beef', reason: 'אכלה לי את הצ׳יפס', spice: 2, anonymous: false, revealed: false, status: 'in_progress', created_at: ago(140), closed_at: null },
+        { id: 'b5', creator: 'me', target: 'f-itai', kind: 'beef', reason: 'ביטל ברגע האחרון', spice: 2, anonymous: false, revealed: false, status: 'settled', created_at: ago(400), closed_at: ago(90) },
         { id: 'b4', creator: 'me', target: 'f-noy', kind: 'promise', reason: 'הבטיחה לבוא ליום הולדת', spice: 3, anonymous: true, revealed: false, status: 'pending', created_at: ago(30), closed_at: null },
       ],
       offers: [
+        { id: 'o2', beef_id: 'b5', from_user: 'f-itai', offer_type: 'coffee', message: 'קפה ומאפה עליי, נשבע', status: 'accepted', fulfilled: false, created_at: ago(92) },
         { id: 'o1', beef_id: 'b3', from_user: 'f-maya', offer_type: 'coffee', message: 'נו טוב. קפה ומאפה עליי', status: 'open', created_at: ago(5) },
       ],
       reveals: [],
@@ -158,7 +167,19 @@
       ],
       karma: [
         { id: 'kk1', sender: 'f-noy', recipient: 'me', kind: 'karma', occasion: 'סתם כי התגעגעתי', message: 'מתגעגעת לשיחות שלנו בחצות', gift: 'words', anonymous: false, revealed: false, reveal_status: null, chain_len: 12, passed: false, thanked: false, deliver_at: ago(2), created_at: ago(2) },
+        { id: 'kk3', sender: 'f-maya', recipient: 'me', kind: 'karma', occasion: 'תודה שהיית שם', message: 'על כל השיחות בלילה', gift: 'coffee', anonymous: false, revealed: false, reveal_status: null, chain_len: 1, passed: true, thanked: true, deliver_at: ago(30), created_at: ago(30) },
         { id: 'kk2', sender: 'f-itai', recipient: 'me', kind: 'compliment', occasion: null, message: 'הכי מצחיק/ה בקבוצה', gift: 'words', anonymous: true, revealed: false, reveal_status: null, chain_len: 1, passed: true, thanked: false, deliver_at: ago(26), created_at: ago(26) },
+      ],
+      notifs: [
+        { id: 1, user: 'me', kind: 'friend_joined', actor: 'f-maya', ref: null, extra: {}, at: ago(300), read: true },
+        { id: 2, user: 'me', kind: 'beef_new', actor: 'f-itai', ref: 'b2', extra: { kind: 'debt', spice: 1 }, at: ago(70), read: true },
+        { id: 3, user: 'me', kind: 'bet_resolved', actor: 'f-noy', ref: 'bt3', extra: { topic: 'מי עוזבת את האח הגדול השבוע', won: true }, at: ago(48), read: false },
+        { id: 4, user: 'me', kind: 'compliment_new', actor: null, ref: 'kk2', extra: {}, at: ago(26), read: false },
+        { id: 5, user: 'me', kind: 'beef_new', actor: null, ref: 'b1', extra: { kind: 'beef', spice: 2 }, at: ago(20), read: false },
+        { id: 6, user: 'me', kind: 'card_invite', actor: 'f-itai', ref: 'gc1', extra: { title: 'מגש פירות ענק ליולדת' }, at: ago(5), read: false },
+        { id: 7, user: 'me', kind: 'offer_new', actor: 'f-maya', ref: 'b3', extra: { offer_type: 'coffee' }, at: ago(5), read: false },
+        { id: 8, user: 'me', kind: 'bet_new', actor: 'f-maya', ref: 'bt1', extra: { topic: 'מכבי לוקחת אליפות השנה' }, at: ago(3), read: false },
+        { id: 9, user: 'me', kind: 'karma_new', actor: 'f-noy', ref: 'kk1', extra: { occasion: 'סתם כי התגעגעתי' }, at: ago(2), read: false },
       ],
       cards: [
         { id: 'gc1', creator: 'f-itai', recipient: 'f-maya', title: 'מגש פירות ענק ליולדת', closes_at: hourPlus(30), delivered: false, created_at: ago(5),
@@ -241,7 +262,7 @@
         const msgs = { coffee: 'טוב נו. קפה עליי', apology: 'סליחה סליחה סליחה', story: 'מעלה סטורי פרגון עכשיו', song: 'מקליט/ה לך שיר. תתכונני' };
         const t = types[Math.floor(Math.random() * types.length)];
         this.s.offers.push({ id: uid(), beef_id: id, from_user: x.target, offer_type: t, message: msgs[t], status: 'open', created_at: now() });
-        x.status = 'in_progress'; this.save();
+        x.status = 'in_progress'; this.notify('offer_new', x.target, id, { offer_type: t }); this.save();
         window.dispatchEvent(new Event('karma:changed'));
       }, 9000);
       return this.wait(id);
@@ -255,7 +276,7 @@
       b.status = 'in_progress'; this.save();
       setTimeout(() => {
         const o = this.s.offers.find((x) => x.id === id); if (!o || o.status !== 'open') return;
-        o.status = 'accepted'; b.status = 'settled'; b.closed_at = now(); this.save();
+        o.status = 'accepted'; b.status = 'settled'; b.closed_at = now(); this.notify('offer_accepted', b.anonymous && !b.revealed ? null : b.creator, beefId, { offer_type: type }); this.save();
         window.dispatchEvent(new Event('karma:changed'));
       }, 7000);
       return this.wait(id);
@@ -278,7 +299,7 @@
       this.save();
       setTimeout(() => {
         const r = this.s.reveals.find((x) => x.beef_id === id); if (!r || r.status !== 'open') return;
-        r.status = 'accepted'; this.beef(id).revealed = true; this.save();
+        r.status = 'accepted'; this.beef(id).revealed = true; this.notify('reveal_accepted', this.beef(id).creator, id, {}); this.save();
         window.dispatchEvent(new Event('karma:changed'));
       }, 6000);
       return this.wait();
@@ -296,7 +317,7 @@
     myId() { return 'me'; }
     ensure() {
       const d = seed();
-      for (const k of ['likes', 'birthday', 'friendLikes', 'bets', 'karma', 'cards']) if (this.s[k] === undefined) this.s[k] = d[k];
+      for (const k of ['likes', 'birthday', 'friendLikes', 'bets', 'karma', 'cards', 'notifs']) if (this.s[k] === undefined) this.s[k] = d[k];
     }
     later(ms, fn) { setTimeout(() => { fn(); this.save(); window.dispatchEvent(new Event('karma:changed')); }, ms); }
     person(id) { return id === 'me' ? { id: 'me', display_name: (this.s.me || {}).display_name || 'אני', color: (this.s.me || {}).color || 'pink', pronoun: (this.s.me || {}).pronoun || 'f' } : this.friend(id); }
@@ -334,7 +355,7 @@
       const id = uid();
       this.s.bets.push({ id, creator: 'me', opponent: b.opponent, topic: b.topic, creator_side: b.mySide, opponent_side: b.theirSide, category: b.category, stake: b.stake, stake_text: b.stakeText || null, resolve_on: b.resolveOn, status: 'proposed', awaiting: b.opponent, creator_claim: null, opponent_claim: null, winner: null, paid: false, created_at: now() });
       this.save();
-      this.later(8000, () => { const x = this.bet(id); if (x && x.status === 'proposed') { x.status = 'active'; x.awaiting = null; } });
+      this.later(8000, () => { const x = this.bet(id); if (x && x.status === 'proposed') { x.status = 'active'; x.awaiting = null; this.notify('bet_accepted', x.opponent, id, { topic: x.topic }); } });
       return this.wait(id);
     }
     respondBet(id, answer, stake, stakeText) {
@@ -354,7 +375,7 @@
         }
       };
       settle(); this.save();
-      if (b.status !== 'resolved') this.later(5000, () => { if (b.creator === 'me') b.opponent_claim = winner; else b.creator_claim = winner; settle(); });
+      if (b.status !== 'resolved') this.later(5000, () => { if (b.creator === 'me') b.opponent_claim = winner; else b.creator_claim = winner; settle(); if (b.status === 'resolved') this.notify('bet_resolved', b.creator === 'me' ? b.opponent : b.creator, b.id, { topic: b.topic, won: b.winner === 'me' }); });
       return this.wait(b.status === 'resolved' ? 'resolved' : 'waiting');
     }
     markBetPaid(id) { const b = this.bet(id); if (b && b.winner === 'me') { b.paid = true; this.save(); } return this.wait(); }
@@ -383,7 +404,7 @@
         anonymous: !!k.anonymous || k.kind === 'compliment', revealed: false, reveal_status: null, chain_len: 1, passed: false, thanked: false,
         deliver_at: k.deliverAt && new Date(k.deliverAt) > new Date() ? new Date(k.deliverAt).toISOString() : now(), created_at: now() });
       this.save();
-      this.later(9000, () => { const x = this.s.karma.find((y) => y.id === id); if (x && new Date(x.deliver_at) <= new Date()) x.thanked = true; });
+      this.later(9000, () => { const x = this.s.karma.find((y) => y.id === id); if (x && new Date(x.deliver_at) <= new Date() && !x.thanked) { x.thanked = true; this.notify('karma_thanked', x.recipient, id, { occasion: x.occasion, message: x.message }); } });
       return this.wait(id);
     }
     karmaInbox() {
@@ -407,7 +428,7 @@
     requestKarmaReveal(id) {
       const k = this.s.karma.find((x) => x.id === id && x.recipient === 'me'); if (!k || k.reveal_status) return this.wait();
       k.reveal_status = 'open'; this.save();
-      this.later(6000, () => { k.reveal_status = 'accepted'; k.revealed = true; });
+      this.later(6000, () => { k.reveal_status = 'accepted'; k.revealed = true; this.notify('karma_reveal_accepted', k.sender, k.id, { message: k.message }); });
       return this.wait();
     }
     respondKarmaReveal(id, yes) { const k = this.s.karma.find((x) => x.id === id && x.sender === 'me'); if (k) { k.reveal_status = yes ? 'accepted' : 'declined'; k.revealed = yes; this.save(); } return this.wait(); }
@@ -433,6 +454,35 @@
       }));
     }
     groupCardsForMe() { return this.wait([]); }
+    // notifications & wallet
+    notify(kind, actor, ref, extra) {
+      const id = (this.s.notifs.reduce((m, n) => Math.max(m, n.id), 0) || 0) + 1;
+      this.s.notifs.push({ id, user: 'me', kind, actor, ref, extra: extra || {}, at: now(), read: false });
+    }
+    myNotifications() {
+      return this.wait(this.s.notifs.filter((n) => new Date(n.at) <= new Date()).map((n) => {
+        const p = n.actor ? this.person(n.actor) : null;
+        return { id: n.id, kind: n.kind, actor: n.actor, actor_name: p && p.display_name, actor_color: p && p.color, actor_pronoun: p && p.pronoun, ref: n.ref, extra: n.extra, at: n.at, unread: !n.read };
+      }).sort((a, b) => b.at.localeCompare(a.at)));
+    }
+    unreadCount() { return this.wait(this.s.notifs.filter((n) => !n.read && new Date(n.at) <= new Date()).length); }
+    markNotificationsRead() { this.s.notifs.forEach((n) => { n.read = true; }); this.save(); return this.wait(); }
+    myWallet() {
+      const out = [];
+      for (const o of this.s.offers) {
+        const b = this.beef(o.beef_id);
+        if (b && b.creator === 'me' && o.status === 'accepted') { const p = this.person(o.from_user); out.push({ source: 'offer', id: o.id, from_user: o.from_user, from_name: p.display_name, from_color: p.color, what: o.offer_type, what_text: o.message, about: b.reason, at: b.closed_at || o.created_at, redeemed: !!o.fulfilled }); }
+      }
+      for (const b of this.s.bets) {
+        if (b.status === 'resolved' && b.winner === 'me') { const oid = b.creator === 'me' ? b.opponent : b.creator; const p = this.person(oid); out.push({ source: 'bet', id: b.id, from_user: oid, from_name: p.display_name, from_color: p.color, what: b.stake, what_text: b.stake_text, about: b.topic, at: b.created_at, redeemed: b.paid }); }
+      }
+      for (const k of this.s.karma) {
+        if (k.recipient === 'me' && k.gift !== 'words' && new Date(k.deliver_at) <= new Date()) { const hide = k.anonymous && !k.revealed; const p = this.person(k.sender); out.push({ source: 'karma', id: k.id, from_user: hide ? null : k.sender, from_name: hide ? null : p.display_name, from_color: hide ? null : p.color, what: k.gift, what_text: k.message, about: k.occasion, at: k.deliver_at, redeemed: false }); }
+      }
+      return this.wait(out.sort((a, b) => (b.at || '').localeCompare(a.at || '')));
+    }
+    markOfferFulfilled(id) { const o = this.s.offers.find((x) => x.id === id); if (o) { o.fulfilled = true; this.save(); } return this.wait(); }
+    async deleteAccount() { await this.signOut(); }
     groupCardMessages(id) {
       const c = this.card(id); if (!c) return this.wait([]);
       return this.wait(c.members.map((m) => { const p = this.person(m.user_id); return { user_id: m.user_id, name: p.display_name, color: p.color, message: m.message, joined: !!m.joined_at }; }));

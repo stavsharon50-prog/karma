@@ -957,4 +957,250 @@ language sql stable security definer set search_path = public as $$
   ) t order by 5 desc limit 60;
 $$;
 
+
+-- ═════════════════════════ Notifications ("what happened since I was here") ═════════════════════════
+-- Rows are written only by the triggers below. The app composes the words (with the right gender),
+-- so a row holds the kind, who did it (null when that must stay anonymous) and what it is about.
+create table if not exists public.notifications (
+  id         bigint generated always as identity primary key,
+  user_id    uuid not null references public.profiles (id) on delete cascade,
+  kind       text not null,
+  actor      uuid references public.profiles (id) on delete set null,
+  ref        uuid,
+  extra      jsonb not null default '{}'::jsonb,
+  visible_at timestamptz not null default now(),
+  read_at    timestamptz
+);
+create index if not exists notifications_user_idx on public.notifications (user_id, visible_at desc);
+alter table public.notifications enable row level security;
+
+create or replace function public.notify(p_user uuid, p_kind text, p_actor uuid, p_ref uuid, p_extra jsonb, p_at timestamptz default now())
+returns void language sql security definer set search_path = public as $$
+  insert into notifications (user_id, kind, actor, ref, extra, visible_at)
+  select p_user, p_kind, p_actor, p_ref, coalesce(p_extra, '{}'::jsonb), coalesce(p_at, now())
+  where p_user is not null and p_user is distinct from p_actor;
+$$;
+
+-- Beefs: new one (anonymous stays anonymous), forgiven, removed.
+create or replace function public.trg_beefs_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare hidden boolean := new.anonymous and not new.revealed;
+begin
+  if tg_op = 'INSERT' then
+    perform notify(new.target, 'beef_new', case when hidden then null else new.creator end, new.id,
+                   jsonb_build_object('kind', new.kind, 'spice', new.spice));
+  elsif new.status is distinct from old.status then
+    if new.status = 'forgiven' then
+      perform notify(new.target, 'beef_forgiven', case when hidden then null else new.creator end, new.id,
+                     case when hidden then '{}'::jsonb else jsonb_build_object('reason', new.reason) end);
+    elsif new.status = 'removed' then
+      delete from notifications where ref = new.id and kind like 'beef%';
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists beefs_notify on public.beefs;
+create trigger beefs_notify after insert or update on public.beefs for each row execute function public.trg_beefs_notify();
+
+-- Offers: new offer, accepted, declined.
+create or replace function public.trg_offers_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare b beefs; other uuid; hidden boolean;
+begin
+  select * into b from beefs where id = new.beef_id;
+  hidden := b.anonymous and not b.revealed;
+  if tg_op = 'INSERT' then
+    other := case when new.from_user = b.creator then b.target else b.creator end;
+    perform notify(other, 'offer_new',
+                   case when new.from_user = b.creator and hidden then null else new.from_user end, b.id,
+                   jsonb_build_object('offer_type', new.offer_type, 'reason', case when other = b.creator then b.reason end));
+  elsif new.status is distinct from old.status and new.status in ('accepted', 'declined') then
+    other := case when new.from_user = b.creator then b.target else b.creator end;
+    perform notify(new.from_user, 'offer_' || new.status,
+                   case when other = b.creator and hidden then null else other end, b.id,
+                   jsonb_build_object('offer_type', new.offer_type));
+  end if;
+  return new;
+end $$;
+drop trigger if exists offers_notify on public.offers;
+create trigger offers_notify after insert or update on public.offers for each row execute function public.trg_offers_notify();
+
+-- Reveal requests on beefs.
+create or replace function public.trg_reveals_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare b beefs;
+begin
+  select * into b from beefs where id = new.beef_id;
+  if tg_op = 'INSERT' then
+    perform notify(b.creator, 'reveal_request', b.target, b.id, jsonb_build_object('reason', b.reason));
+  elsif new.status is distinct from old.status then
+    perform notify(b.target, 'reveal_' || new.status, case when new.status = 'accepted' then b.creator end, b.id, '{}'::jsonb);
+  end if;
+  return new;
+end $$;
+drop trigger if exists reveals_notify on public.reveal_requests;
+create trigger reveals_notify after insert or update on public.reveal_requests for each row execute function public.trg_reveals_notify();
+
+-- Bets: every step, to whoever did not just act.
+create or replace function public.trg_bets_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare ex jsonb := jsonb_build_object('topic', new.topic, 'stake', new.stake);
+        other uuid := case when auth.uid() = new.creator then new.opponent else new.creator end;
+begin
+  if tg_op = 'INSERT' then
+    perform notify(new.opponent, 'bet_new', new.creator, new.id, ex); return new;
+  end if;
+  if new.status = 'proposed' and new.awaiting is distinct from old.awaiting then
+    perform notify(new.awaiting, 'bet_counter', other_of(new, new.awaiting), new.id, ex);
+  elsif new.status is distinct from old.status then
+    if new.status in ('active', 'declined') then
+      perform notify(other, 'bet_' || case when new.status = 'active' then 'accepted' else 'declined' end, auth.uid(), new.id, ex);
+    elsif new.status = 'resolved' then
+      perform notify(new.creator, 'bet_resolved', new.opponent, new.id, ex || jsonb_build_object('won', new.winner = new.creator));
+      perform notify(new.opponent, 'bet_resolved', new.creator, new.id, ex || jsonb_build_object('won', new.winner = new.opponent));
+    elsif new.status = 'disputed' then
+      perform notify(other, 'bet_disputed', auth.uid(), new.id, ex);
+    end if;
+  elsif new.status = 'active' and (new.creator_claim is null or new.opponent_claim is null)
+        and (new.creator_claim is distinct from old.creator_claim or new.opponent_claim is distinct from old.opponent_claim) then
+    perform notify(other, 'bet_claimed', auth.uid(), new.id, ex);
+  elsif new.paid and not old.paid then
+    perform notify(other, 'bet_paid', auth.uid(), new.id, ex);
+  end if;
+  return new;
+end $$;
+create or replace function public.other_of(b bets, u uuid)
+returns uuid language sql immutable as $$ select case when u = b.creator then b.opponent else b.creator end $$;
+drop trigger if exists bets_notify on public.bets;
+create trigger bets_notify after insert or update on public.bets for each row execute function public.trg_bets_notify();
+
+-- Good karma & compliments: arrive at delivery time; thanks and reveals go back to the sender.
+create or replace function public.trg_karma_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    perform notify(new.recipient, case when new.kind = 'compliment' then 'compliment_new' else 'karma_new' end,
+                   case when new.anonymous then null else new.sender end, new.id,
+                   jsonb_build_object('occasion', new.occasion), new.deliver_at);
+  elsif tg_op = 'DELETE' then
+    delete from notifications where ref = old.id and user_id = old.recipient;
+    return old;
+  else
+    if new.thanked and not old.thanked then
+      perform notify(new.sender, 'karma_thanked', new.recipient, new.id, jsonb_build_object('occasion', new.occasion, 'message', new.message));
+    end if;
+    if new.reveal_status is distinct from old.reveal_status then
+      if new.reveal_status = 'open' then
+        perform notify(new.sender, 'karma_reveal_request', new.recipient, new.id, jsonb_build_object('message', new.message));
+      elsif new.reveal_status = 'accepted' then
+        perform notify(new.recipient, 'karma_reveal_accepted', new.sender, new.id, jsonb_build_object('message', new.message));
+      end if;
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists karma_notify on public.karma;
+create trigger karma_notify after insert or update or delete on public.karma for each row execute function public.trg_karma_notify();
+
+-- Group cards: invitations, and the card itself to the recipient when it closes (or is sent early).
+create or replace function public.trg_cards_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    perform notify(new.recipient, 'card_delivered', new.creator, new.id, jsonb_build_object('title', new.title), new.closes_at);
+  elsif new.delivered and not old.delivered then
+    update notifications set visible_at = now() where ref = new.id and kind = 'card_delivered' and visible_at > now();
+  end if;
+  return new;
+end $$;
+drop trigger if exists cards_notify on public.group_cards;
+create trigger cards_notify after insert or update on public.group_cards for each row execute function public.trg_cards_notify();
+
+create or replace function public.trg_card_members_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare c group_cards;
+begin
+  select * into c from group_cards where id = new.card_id;
+  if new.joined_at is null then
+    perform notify(new.user_id, 'card_invite', c.creator, c.id, jsonb_build_object('title', c.title));
+  end if;
+  return new;
+end $$;
+drop trigger if exists card_members_notify on public.group_card_members;
+create trigger card_members_notify after insert on public.group_card_members for each row execute function public.trg_card_members_notify();
+
+-- Friends: someone joined through my link.
+create or replace function public.trg_friends_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.status = 'accepted' and (tg_op = 'INSERT' or old.status is distinct from 'accepted') then
+    perform notify(case when auth.uid() = new.user_low then new.user_high else new.user_low end, 'friend_joined', auth.uid(), null, '{}'::jsonb);
+  end if;
+  return new;
+end $$;
+drop trigger if exists friends_notify on public.friendships;
+create trigger friends_notify after insert or update on public.friendships for each row execute function public.trg_friends_notify();
+
+create or replace function public.my_notifications()
+returns table (id bigint, kind text, actor uuid, actor_name text, actor_color text, actor_pronoun text,
+               ref uuid, extra jsonb, at timestamptz, unread boolean)
+language sql stable security definer set search_path = public as $$
+  select n.id, n.kind, n.actor, p.display_name, p.color, p.pronoun, n.ref, n.extra, n.visible_at, n.read_at is null
+  from notifications n left join profiles p on p.id = n.actor
+  where n.user_id = auth.uid() and n.visible_at <= now()
+  order by n.visible_at desc limit 100;
+$$;
+
+create or replace function public.unread_count()
+returns int language sql stable security definer set search_path = public as $$
+  select count(*)::int from notifications where user_id = auth.uid() and read_at is null and visible_at <= now();
+$$;
+
+create or replace function public.mark_notifications_read()
+returns void language sql security definer set search_path = public as $$
+  update notifications set read_at = now() where user_id = auth.uid() and read_at is null and visible_at <= now();
+$$;
+
+-- ───────────────────────── "My gifts": what others owe me, to redeem ─────────────────────────
+alter table public.offers add column if not exists fulfilled boolean not null default false;
+
+-- Everything I am owed: accepted settlement offers made to me, bets I won, gifts attached to good karma.
+create or replace function public.my_wallet()
+returns table (source text, id uuid, from_user uuid, from_name text, from_color text, what text, what_text text,
+               about text, at timestamptz, redeemed boolean)
+language sql stable security definer set search_path = public as $$
+  select 'offer', o.id, o.from_user, p.display_name, p.color, o.offer_type, o.message, b.reason, b.closed_at, o.fulfilled
+  from offers o join beefs b on b.id = o.beef_id join profiles p on p.id = o.from_user
+  where b.creator = auth.uid() and o.status = 'accepted'
+  union all
+  select 'bet', b.id, case when b.creator = auth.uid() then b.opponent else b.creator end, p.display_name, p.color,
+         b.stake, b.stake_text, b.topic, b.resolved_at, b.paid
+  from bets b join profiles p on p.id = case when b.creator = auth.uid() then b.opponent else b.creator end
+  where b.status = 'resolved' and b.winner = auth.uid()
+  union all
+  select 'karma', k.id, case when k.anonymous and not k.revealed then null else k.sender end,
+         case when k.anonymous and not k.revealed then null else p.display_name end,
+         case when k.anonymous and not k.revealed then null else p.color end,
+         k.gift, k.message, k.occasion, k.deliver_at, false
+  from karma k join profiles p on p.id = k.sender
+  where k.recipient = auth.uid() and k.gift <> 'words' and k.deliver_at <= now()
+  order by 9 desc nulls last;
+$$;
+
+create or replace function public.mark_offer_fulfilled(p_offer uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update offers o set fulfilled = true from beefs b
+  where o.id = p_offer and b.id = o.beef_id and b.creator = auth.uid() and o.status = 'accepted';
+end $$;
+
+-- ───────────────────────── delete my account ─────────────────────────
+-- Removes the profile and, through the foreign keys, everything tied to it
+-- (friendships, beefs, offers, bets, karma, group cards, notifications). Usage events keep no user id.
+create or replace function public.delete_my_account()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  delete from profiles where id = auth.uid();
+end $$;
+
 grant execute on all functions in schema public to authenticated;
