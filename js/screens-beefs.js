@@ -160,26 +160,31 @@
     const f = b.friend;
     const first = K.q.get('first');
     const cool = K.coolLeft(b);
+    const bal = A().balanceWith(f.id);
+    const spiceName = ['', 'קליל', 'חריף', 'אש'][b.spice];
     let actions;
     if (b.status === 'open') actions = `
-      <button class="btn" id="settle">לסגור חשבון</button>
-      <button class="link muted" id="report">זה לא מצחיק אותי</button>`;
+      <button class="btn" id="settle">לסגור את הביף</button>
+      <button class="link" id="report" style="color:var(--cream)">זה לא מצחיק אותי</button>`;
     else if (b.status === 'pending') actions = `
-      <div class="note center">ביקשת סליחה מחכים ל${esc(f.name)}…</div>
-      <a class="btn md lime" href="#/settle/${id}?coffee=1">לשדרג לקפה · סוגר מיד</a>`;
+      <p class="center small" style="margin:0">ביקשת סליחה. מחכים ל${esc(f.name)}…</p>
+      <a class="btn" href="#/settle/${id}?coffee=1">לשדרג לקפה · סוגר מיד</a>`;
     else if (b.status === 'wantmore') actions = `
-      <div class="warn center">${esc(f.name)} ${K.gv(f, 'רוצה', 'רוצה')} יותר</div>
+      <p class="center small" style="margin:0">${esc(f.name)} ${K.gv(f, 'רוצה', 'רוצה')} יותר מסליחה.</p>
       <a class="btn" href="#/settle/${id}?coffee=1">לשלוח קפה</a>
-      <a class="btn md white" href="#/settle/${id}">להציע משהו אחר</a>`;
+      <a class="btn md beef-ghost" href="#/settle/${id}">משהו אחר</a>`;
     K.render(`
-      <span class="kicker">You've been KARMAd 😈</span>
-      <div class="col center" style="gap:6px">${K.av(f, 'xl')}<h1>ל${esc(f.name)} יש ביף איתך</h1><span class="small muted">${K.timeAgo(b.createdAt)}</span></div>
-      <div class="sticker center" style="padding:22px 16px"><span class="big-reason">${esc(b.reason)}</span><span style="align-self:center">${K.chilis(b.spice).replace('chilis', 'chilis lg')}</span></div>
-      ${balanceLine(f.id)}
-      ${cool ? `<p class="micro center muted" style="margin:0"> ביף קליל. מתקרר לבד ${cool} אם לא סוגרים.</p>` : ''}
+      <div class="beef-notif">${K.av(f, 'sm')}<div style="flex:1;min-width:0"><div class="micro"><b>KARMA.</b> · ${K.timeAgo(b.createdAt)}</div><b class="ltr" style="display:block;text-align:right">You've been KARMAd!</b><span class="small">${esc(f.name)} ${K.gv(f, 'פתחה', 'פתח')} איתך ביף</span></div></div>
+      <div class="beef-title ltr">You've been<br><span>KARMAd!</span></div>
+      <p style="margin:-6px 0 0">${esc(f.name)} ${K.gv(f, 'פתחה', 'פתח')} איתך ביף. מה עשית?</p>
+      <div class="beef-sticker">
+        <div class="row" style="gap:6px;justify-content:flex-start"><span class="pill peach">ביף</span><span class="pill">${spiceName} ${'🌶'.repeat(b.spice)}</span><span class="pill">${K.timeAgo(b.createdAt)}</span></div>
+        <div class="big-reason">${esc(b.reason)}</div>
+        <a class="micro" href="#/friend/${f.id}" style="color:var(--grey)">המאזן שלכם: 😇 ${bal.good} · 😈 ${bal.bad}</a>
+      </div>
       <div class="stack-bottom">${actions}</div>`, {
-      theme: 'peach',
-      moment: { close: first ? '' : '', share: () => K.shareStory({ bg: 'peach', kicker: "You've been KARMAd 😈", title: `ל${f.name} יש ביף איתי`, card: { lines: [b.reason, '🌶'.repeat(b.spice)] }, sub: 'מה עשיתי? ' }, 'beef') },
+      theme: 'dark',
+      moment: { close: '', share: () => K.shareStory({ bg: 'ink', kicker: "You've been KARMAd!", title: `ל${f.name} יש ביף איתי`, card: { lines: [b.reason, '🌶'.repeat(b.spice)] }, sub: 'מה עשיתי?' }, 'beef') },
     });
     if (first) { A().setOnboarded(); A().clearInvite(); }
     K.on('#settle', 'click', () => K.go('settle/' + id));
@@ -309,14 +314,14 @@
       K.render(`
         ${K.header('ביף חדש 😈', { close: true })}
         <p class="muted" style="margin:-8px 0 0">מישהו חייב לך משהו קטן? בוחרים על מה. הוא יוכל לסגור את זה בסליחה או בקפה.</p>
-        <section class="col"><h3>על מי?</h3>${K.friendPicker(st.to)}</section>
-        <section class="col"><h3>מה קרה?</h3>
+        <section class="col"><h3>1 · על מי?</h3>${K.friendPicker(st.to)}</section>
+        <section class="col"><h3>2 · מה קרה?</h3>
           <div class="wrap">${A().PRESETS.map((p) => `<button class="chip" data-r="${esc(p)}" aria-pressed="${st.reason === p}">${esc(p)}</button>`).join('')}
           <button class="chip" data-r="__custom" aria-pressed="${st.reason === '__custom'}"> משהו אחר</button></div>
           ${st.reason === '__custom' ? `<input class="input" id="custom" maxlength="60" placeholder="מה ${f ? esc(f.name) : 'הוא'} עשה?" value="${esc(st.custom)}"><div class="row between"><div class="warn" id="mw" hidden></div><span class="counter-hint" id="cnt">${st.custom.length}/60</span></div>` : ''}
 </section>
-        ${st.reason ? `<section class="col"><h3>כמה חריף?</h3>
-          <div class="grid3">${[1, 2, 3].map((n) => `<button class="spice" data-s="${n}" aria-pressed="${st.spice === n}" aria-label="חריפות ${n} מתוך 3"><span style="font-size:22px">${'🌶'.repeat(n)}</span></button>`).join('')}</div>
+        ${st.reason ? `<section class="col"><h3>3 · כמה חריף?</h3>
+          <div class="grid3">${[1, 2, 3].map((n) => `<button class="spice" data-s="${n}" aria-pressed="${st.spice === n}" aria-label="חריפות ${n} מתוך 3"><span style="font-size:20px">${'🌶'.repeat(n)}</span><span>${['', 'קליל', 'חריף', 'אש'][n]}</span></button>`).join('')}</div>
 </section>` : ''}
         <div class="stack-bottom">
           <button class="btn" id="send" ${f && reason ? '' : 'disabled'}>${f && f.invited ? `${K.ICON.wa}<span>לשלוח בוואטסאפ 😈</span>` : 'לשלוח 😈'}</button>

@@ -540,3 +540,12 @@ h2, .h2 { font-size: 20px; }
 .step .n { font-size: 18px; }
 .btn.login { box-shadow: var(--sh-m); border: var(--b-bold); font-family: var(--display); font-weight: 900; font-size: 17px; }
 .wcard .t1 { color: var(--grey); }
+
+/* beef moment, like the first design */
+.beef-notif { display: flex; gap: 10px; align-items: center; background: var(--cream); color: var(--ink); border-radius: 18px; padding: 10px 12px; }
+.beef-title { font-family: var(--display); font-weight: 900; font-size: 52px; line-height: .95; letter-spacing: -1px; text-align: left; color: var(--cream); }
+.beef-title span { color: var(--pink); }
+.beef-sticker { background: var(--white); color: var(--ink); border: 2.5px solid var(--ink); border-radius: 22px; box-shadow: 0 8px 0 var(--chili); padding: 16px; display: flex; flex-direction: column; gap: 10px; transform: rotate(-2deg); }
+body.t-dark .icon-btn { background: var(--cream); }
+.btn.md.beef-ghost { background: transparent; color: var(--cream); border-color: var(--cream); }
+body.t-dark .link { color: var(--cream); }
