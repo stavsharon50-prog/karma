@@ -13,6 +13,7 @@
     const filter = K.q.get('f') || K.state.homeFilter || 'all';
     K.state.homeFilter = filter;
     const nothing = !bf.onMe.length && !bf.mine.length && !bf.closed.length && !kl.got.length && !kl.sent.length;
+    const soon = A().friends().map((f) => ({ f, d: K.daysToBirthday(f.birthday) })).filter((x) => x.d != null && x.d <= 30).sort((a, b) => a.d - b.d);
     const fresh = kl.got.filter((k) => !k.seen && Date.now() - new Date(k.deliverAt) < 3 * 864e5);
 
     // ── hero: one big number ──
@@ -85,7 +86,8 @@
         <div class="sec"><h2 class="display">הרשימה שלי</h2></div>
         <div class="tabs" role="tablist">${[['all', 'הכל'], ['beefs', 'ביפים 😈'], ['good', 'גוד קארמה 😇'], ['closed', 'נסגרו']].map(([k, t]) => `<button class="tab" role="tab" data-hf="${k}" aria-selected="${filter === k}">${t}</button>`).join('')}</div>
         <div class="col">${items.map((x) => x.html).join('') || '<p class="muted center">ריק פה.</p>'}</div>
-</section>`}
+      </section>
+      ${(filter === 'all' || filter === 'good') && soon.length ? `<section class="col"><h2>🎂 ימי הולדת בקרוב</h2><div class="list">${soon.map(({ f, d }) => `<a href="#/new-karma?to=${f.id}&occ=bday">${K.av(f, 'sm')}<span class="grow"><b>${esc(f.name)}</b> · ${K.bdayText(f.birthday)}</span><span class="pill ${d <= 7 ? 'pink' : ''}">${d === 0 ? 'היום!' : d === 1 ? 'מחר' : `עוד ${d} ימים`}</span></a>`).join('')}</div></section>` : ''}`}
     `, { nav: 'home' });
     K.on('[data-hf]', 'click', (e) => K.go('?f=' + e.currentTarget.dataset.hf));
     K.on('#inv', 'click', () => K.shareWA(K.inviteText('plain')));
