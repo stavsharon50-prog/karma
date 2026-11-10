@@ -188,7 +188,7 @@
     let pin = '';
     const bg = document.createElement('div'); bg.className = 'sheet-bg';
     const paint = (err) => {
-      bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="קוד העסק">
+      bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="קוד העסק"><button class="sheet-x" data-close aria-label="סגירה">${K.ICON.close}</button>
         <h2 class="center">לצוות של ${esc(g.product.biz.name)}</h2>
         <p class="center small" style="margin:0">מקלידים את הקוד של העסק (4 ספרות) כדי לסמן ש${esc(g.product.name)} נמסר.</p>
         <div class="pindots" aria-live="polite" aria-label="${pin.length} ספרות">${[0, 1, 2, 3].map((i) => `<i class="${i < pin.length ? 'on' : ''}"></i>`).join('')}</div>

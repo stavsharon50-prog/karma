@@ -108,11 +108,9 @@
     K.on('#share', 'click', () => K.shareStory({ bg: 'pinkSoft', kicker: 'KARMA BALANCE', title: `${me.name} & ${f.name}`, card: { lines: [`😇 ${b.good}   ·   😈 ${b.bad}`, `🥊 ${b.bets.won}–${b.bets.lost}`] } }, 'balance'));
   });
 
-  const KIND_EMOJI = { beef: '😈', karma: '😇', bet: '🥊', gesture: '🤝', wantmore: '😤', closed: '✓', thanks: '💌', gift: '🎁', expiring: '⏳' };
   K.route('inbox', async () => {
     const ns = A().notifications();
-    const row = (n) => `<a href="#/${n.link}"><span style="font-size:22px;width:28px;text-align:center">${KIND_EMOJI[n.kind] || '•'}</span>
-      <span class="grow"><b>${/[A-Za-z]/.test(n.title) ? `<span class="ltr">${esc(n.title)}</span>` : esc(n.title)}</b><br><span class="small">${esc(n.body)}</span><br><span class="micro muted">${K.timeAgo(n.createdAt)}</span></span></a>`;
+    const row = (n) => `<a href="#/${n.link}"><span class="grow"><b>${/[A-Za-z]/.test(n.title) ? `<span class="ltr">${esc(n.title)}</span>` : esc(n.title)}</b><br><span class="small">${esc(n.body)}</span><br><span class="micro muted">${K.timeAgo(n.createdAt)}</span></span></a>`;
     const fresh = ns.filter((n) => !n.read), old = ns.filter((n) => n.read);
     const d = A().me().notif.digest;
     K.render(`

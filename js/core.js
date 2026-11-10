@@ -104,7 +104,7 @@
   // Bottom sheet with custom HTML. Buttons with data-v="value" resolve the promise with that value.
   K.sheetHTML = (html, label) => new Promise((resolve) => {
     const bg = document.createElement('div'); bg.className = 'sheet-bg';
-    bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${K.esc(label || '')}">${html}</div>`;
+    bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${K.esc(label || '')}"><button class="sheet-x" data-v="" aria-label="סגירה">${K.ICON.close}</button>${html}</div>`;
     const done = (v) => { bg.remove(); resolve(v); };
     bg.addEventListener('click', (e) => {
       if (e.target === bg) return done(null);
@@ -115,6 +115,9 @@
   });
   K.confirm = (title, body, yes, no, danger) => K.sheetHTML(`<h2>${K.esc(title)}</h2>${body ? `<p class="muted" style="margin:0">${K.esc(body)}</p>` : ''}
     <button class="btn ${danger ? '' : 'lime'}" data-v="yes">${K.esc(yes)}</button><button class="btn ghost" data-v="no">${K.esc(no || 'ביטול')}</button>`, title).then((v) => v === 'yes');
+
+  // Every sheet has an ✕; this closes the ones that don't route through sheetHTML.
+  document.addEventListener('click', (e) => { const x = e.target.closest('.sheet-x[data-close]'); if (x) { const bg = x.closest('.sheet-bg'); if (bg) bg.remove(); } });
 
   // Simulated checkout (no payment provider yet).
   K.pay = (amount, label) => K.sheetHTML(`

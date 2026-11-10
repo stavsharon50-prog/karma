@@ -89,7 +89,7 @@
   // Sheet inputs vanish when the sheet closes, so read them on the button click.
   K.askName = () => new Promise((resolve) => {
     const bg = document.createElement('div'); bg.className = 'sheet-bg';
-    bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="הזמנת חבר"><h2>את מי מזמינים?</h2>
+    bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="הזמנת חבר"><button class="sheet-x" data-close aria-label="סגירה">${K.ICON.close}</button><h2>את מי מזמינים?</h2>
       <label class="field">השם<input class="input" id="inv-name" maxlength="20" autocomplete="off"></label>
       <p class="micro muted" style="margin:0">אחרי השליחה נפתח וואטסאפ עם ההזמנה.</p>
       <button class="btn lime" id="inv-ok">להוסיף</button><button class="btn ghost" id="inv-no">ביטול</button></div>`;
@@ -109,7 +109,7 @@
     if (location.hash !== here || document.querySelector('.sheet-bg')) return;
     K.api.setBdayAsked();
     const bg = document.createElement('div'); bg.className = 'sheet-bg';
-    bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="יום הולדת">
+    bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="יום הולדת"><button class="sheet-x" data-close aria-label="סגירה">${K.ICON.close}</button>
       <div style="font-size:44px;text-align:center">🎂</div>
       <h2 class="center">רוצה שגם לך ישלחו ביום ההולדת?</h2>
       <p class="muted center small" style="margin:0">רק יום וחודש. חברים יקבלו תזכורת קטנה כמה ימים לפני.</p>
@@ -158,8 +158,8 @@
       const lines = spec.card.lines; const h = 120 + lines.length * 100;
       ctx.save(); ctx.translate(540, y + h / 2); ctx.rotate(-0.04); ctx.translate(-540, -(y + h / 2));
       box(ctx, 110, y, 860, h, C[spec.card.fill] || C.white, 50, 16);
-      lines.forEach((l, i) => { ctx.fillStyle = C.ink; ctx.font = (i === 0 ? '900 64px' : '700 50px') + ' Rubik, Heebo, sans-serif'; ctx.fillText(l, 540, y + 110 + i * 100); });
-      ctx.restore(); y += h + 80;
+      lines.forEach((l, i) => { ctx.direction = /[\u0590-\u05FF]/.test(l) ? 'rtl' : 'ltr'; ctx.fillStyle = C.ink; ctx.font = (i === 0 ? '900 64px' : '700 50px') + ' Rubik, Heebo, sans-serif'; ctx.fillText(l, 540, y + 110 + i * 100); });
+      ctx.restore(); ctx.direction = 'rtl'; y += h + 80;
     }
     if (spec.sub) { ctx.font = '700 52px Heebo, sans-serif'; ctx.fillStyle = spec.bg === 'ink' ? C.cream : C.ink; wrapText(ctx, spec.sub, 540, y, 900, 66); }
     ctx.font = '700 42px Heebo, sans-serif'; ctx.fillStyle = spec.bg === 'ink' ? C.cream : C.ink;
