@@ -142,7 +142,7 @@
     <div class="row between"><h2>תשלום</h2><span class="tag peach">הדגמה</span></div>
     <div class="card cream flat row between"><span>${K.esc(label)}</span><b class="display" style="font-size:22px">${K.money(amount)}</b></div>
     <button class="btn dark" data-v="pay" style="gap:6px">${K.ICON.apple}<span>Pay</span></button>
-    <button class="btn md white" data-v="pay">💳 כרטיס אשראי</button>
+    <button class="btn md white" data-v="pay"> כרטיס אשראי</button>
     <p class="micro muted center" style="margin:0">בפרוטוטייפ לא נגבה כסף. הסליקה האמיתית תחובר בהמשך.</p>
     <button class="btn ghost" data-v="no">ביטול</button>`, 'תשלום').then((v) => v === 'pay');
 
@@ -158,7 +158,7 @@
       ${it('home', '#/', 'home', 'בית')}
       <button class="bn-plus" data-plus aria-label="מה שולחים?">${K.ICON.plus}</button>
       ${it('wallet', '#/wallet', 'gift', 'המתנות שלי')}
-    </nav>`;
+</nav>`;
   };
 
   // opts: { nav, theme: 'dark'|'pink'|'hotpink'|'lime'|'lav', moment: { share: fn, close: path } }
@@ -172,7 +172,7 @@
     const top = opts.moment ? `<div class="moment-top">
         <button class="icon-btn" data-m-close aria-label="סגירה">${K.ICON.close}</button>
         ${opts.moment.share ? `<button class="icon-btn" data-m-share aria-label="לשתף">${K.ICON.share}</button>` : '<span></span>'}
-      </div>` : '';
+</div>` : '';
     $app().innerHTML = demo + `<main class="screen">${top}${html}</main>` + (opts.nav ? K.bottomNav(opts.nav) : '');
     window.scrollTo(0, 0);
     if (opts.moment) {
@@ -188,7 +188,7 @@
       <div class="row" style="gap:8px">
         <a class="icon-btn" href="#/inbox" aria-label="התראות">${K.ICON.bell}<span class="dot" data-bell-dot ${K.state.unread ? '' : 'hidden'}>${K.state.unread > 9 ? '9+' : K.state.unread || ''}</span></a>
         <a class="icon-btn" href="#/profile" aria-label="פרופיל">${K.ICON.user}</a>
-      </div></header>`;
+</div></header>`;
 
   // The "what are we sending?" sheet behind the + button.
   document.addEventListener('click', async (e) => {
@@ -197,8 +197,8 @@
       <div class="col" style="gap:8px">
         <button class="opt" data-v="new-beef" style="background:#FFEDE6"><span class="em">😈</span><span style="flex:1"><span class="t">ביף</span><br><span class="s">מישהו חייב לך משהו קטן? איחר, שכח, אכל לך את הצ׳יפס</span></span></button>
         <button class="opt" data-v="new-karma" style="background:var(--pink-soft)"><span class="em">😇</span><span style="flex:1"><span class="t">גוד קארמה</span><br><span class="s" style="color:var(--ink)">בא לך לפרגן? תודה, מזל טוב, סתם כי התגעגעת</span></span></button>
-        ${K.api.BETS ? '' : '<!--'}<button class="opt" data-v="new-bet" style="background:var(--lime)"><span class="em">🥊</span><span style="flex:1"><span class="t">התערבות</span><br><span class="s" style="color:var(--ink)">על הכבוד, או על קפה</span></span></button>${K.api.BETS ? '' : '-->'}
-      </div><button class="btn ghost" data-v="">ביטול</button>`, 'מה שולחים?');
+        ${K.api.BETS ? '' : '<!--'}<button class="opt" data-v="new-bet" style="background:var(--lime)"><span class="em"></span><span style="flex:1"><span class="t">התערבות</span><br><span class="s" style="color:var(--ink)">על הכבוד, או על קפה</span></span></button>${K.api.BETS ? '' : '-->'}
+</div><button class="btn ghost" data-v="">ביטול</button>`, 'מה שולחים?');
     if (v) { K.api.log('create_sheet', { pick: v }); K.go(v); }
   });
 

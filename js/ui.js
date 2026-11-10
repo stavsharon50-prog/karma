@@ -6,9 +6,9 @@
 
   K.statusPill = (b) => {
     const map = {
-      open: ['peach', 'פתוח'], pending: ['pink', 'הצעה מחכה'], wantmore: ['peach', 'רוצה יותר 😤'],
-      settled: ['lime', b.closedBy === 'gift' ? `נסגר ${b.gift && b.gift.product ? b.gift.product.emoji : '🎁'}` : `נסגר ${b.gesture ? K.api.GESTURES[b.gesture].emoji : '🤝'}`],
-      released: ['lav', 'שוחרר 🕊'], cooled: ['lav', 'התקרר ❄️'], removed: ['', 'הוסר'],
+      open: ['peach', 'פתוח'], pending: ['pink', 'הצעה מחכה'], wantmore: ['peach', 'רוצה יותר '],
+      settled: ['lime', b.closedBy === 'gift' ? `נסגר ${b.gift && b.gift.product ? b.gift.product.emoji : ''}` : `נסגר ${b.gesture ? K.api.GESTURES[b.gesture].emoji : ''}`],
+      released: ['lav', 'שוחרר '], cooled: ['lav', 'התקרר '], removed: ['', 'הוסר'],
     };
     const [c, t] = map[b.status] || ['', b.status];
     return `<span class="pill ${c}">${t}</span>`;
@@ -26,7 +26,7 @@
     return `<a class="beef ${['settled', 'released', 'cooled'].includes(b.status) ? 'closed' : ''}" href="${href}">
       ${K.av(b.friend)}
       <span class="body"><span class="reason">${esc(b.reason)}</span>
-      <span class="meta">${mine ? 'על ' : ''}${esc(b.friend.name)} · ${K.timeAgo(b.createdAt)} · ${K.chilis(b.spice)}${cool && opts && opts.cool ? ` · ❄️ מתקרר ${cool}` : ''}</span></span>
+      <span class="meta">${mine ? 'על ' : ''}${esc(b.friend.name)} · ${K.timeAgo(b.createdAt)} · ${K.chilis(b.spice)}${cool && opts && opts.cool ? ` · מתקרר ${cool}` : ''}</span></span>
       ${K.statusPill(b)}</a>`;
   };
 
@@ -41,7 +41,7 @@
 
   K.validity = (g) => {
     const days = Math.ceil((new Date(g.expiresAt) - Date.now()) / 864e5);
-    if (days <= 7) return `<span class="pill peach">⏳ נשאר${days === 1 ? ' יום אחד' : ` ${days} ימים`}</span>`;
+    if (days <= 7) return `<span class="pill peach"> נשאר${days === 1 ? ' יום אחד' : ` ${days} ימים`}</span>`;
     return `<span class="micro muted">בתוקף עד ${K.dateShort(g.expiresAt)}</span>`;
   };
   K.sourceText = (g) => ({ beef: 'סגירת חשבון', karma: 'גוד קארמה', bet: 'התערבות' }[g.source] || '');
@@ -70,9 +70,9 @@
     opts = opts || {};
     const fs = K.api.friends();
     return `<div class="friends-row" role="group" aria-label="חברים">
-      ${fs.map((f) => `<button class="friend-pick" data-fid="${f.id}" aria-pressed="${sel === f.id}">${K.av(f, 'lg')}<span>${esc(f.name)}${f.invited ? ' ⏳' : ''}</span></button>`).join('')}
+      ${fs.map((f) => `<button class="friend-pick" data-fid="${f.id}" aria-pressed="${sel === f.id}">${K.av(f, 'lg')}<span>${esc(f.name)}${f.invited ? ' ' : ''}</span></button>`).join('')}
       ${opts.invite === false ? '' : `<button class="friend-pick" data-invite><span class="av lg" style="border-style:dashed">+</span><span>להזמין</span></button>`}
-    </div>`;
+</div>`;
   };
   // Wire a picker; onPick(fid) after selection. Inviting asks for a name and creates a pending friend.
   K.wirePicker = (onPick) => {
@@ -111,7 +111,7 @@
     K.api.setBdayAsked();
     const bg = document.createElement('div'); bg.className = 'sheet-bg';
     bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="יום הולדת"><button class="sheet-x" data-close aria-label="סגירה">${K.ICON.close}</button>
-      <div style="font-size:44px;text-align:center">🎂</div>
+      <div style="font-size:44px;text-align:center"></div>
       <h2 class="center">רוצה שגם לך ישלחו ביום ההולדת?</h2>
       <p class="muted center small" style="margin:0">רק יום וחודש. חברים יקבלו תזכורת קטנה כמה ימים לפני.</p>
       <div class="row"><select class="input" id="bd-d" aria-label="יום">${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
@@ -123,7 +123,7 @@
     bg.querySelector('#bd-no').onclick = close;
     bg.querySelector('#bd-ok').onclick = async () => {
       const d = bg.querySelector('#bd-d').value, m = bg.querySelector('#bd-m').value;
-      close(); await K.api.updateMe({ birthday: `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` }); K.toast('נשמר 🎂');
+      close(); await K.api.updateMe({ birthday: `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` }); K.toast('נשמר');
     };
   };
 
@@ -132,7 +132,7 @@
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   function box(ctx, x, y, w, h, fill, r, sh) { ctx.fillStyle = C.ink; rr(ctx, x + (sh || 14), y + (sh || 14), w, h, r || 40); ctx.fill(); ctx.fillStyle = fill; rr(ctx, x, y, w, h, r || 40); ctx.fill(); ctx.lineWidth = 7; ctx.strokeStyle = C.ink; ctx.stroke(); }
   function wrapText(ctx, text, x, y, maxW, lh) {
-    const words = String(text).split(' '); let line = '', yy = y; const lines = [];
+    const words = String(text).split(''); let line = '', yy = y; const lines = [];
     for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
     lines.push(line); lines.forEach((l, i) => ctx.fillText(l, x, yy + i * lh)); return lines.length * lh;
   }

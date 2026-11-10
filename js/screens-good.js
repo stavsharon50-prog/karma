@@ -28,20 +28,20 @@
           <textarea class="input" id="msg" maxlength="120" rows="2" placeholder="${f ? `מה בא לך להגיד ל${esc(f.name)}?` : ''}">${esc(st.msg)}</textarea>
           <div class="warn" id="mw" hidden></div></section>
         <section class="col"><h3>מה מצרפים?</h3>
-          <div class="seg"><button data-mode="gift" aria-pressed="${st.mode === 'gift'}">🎁 מתנה</button><button data-mode="donate" aria-pressed="${st.mode === 'donate'}">💝 תרומה</button><button data-mode="words" aria-pressed="${st.mode === 'words'}">💌 רק מילים</button></div>
+          <div class="seg"><button data-mode="gift" aria-pressed="${st.mode === 'gift'}"> מתנה</button><button data-mode="donate" aria-pressed="${st.mode === 'donate'}"> תרומה</button><button data-mode="words" aria-pressed="${st.mode === 'words'}"> רק מילים</button></div>
           ${st.mode === 'donate' ? `<p class="small muted" style="margin:0">תורמים בשם ${f ? esc(f.name) : 'החבר'} לעמותה. ${f ? K.gv(f, 'היא', 'הוא') : 'הוא'} ${f ? K.gv(f, 'תקבל', 'יקבל') : 'יקבל'} תעודה קטנה.</p>
             <div class="col" style="gap:8px">${A().CAUSES.map((c) => `<button class="opt" data-cause="${c.id}" aria-pressed="${st.cause === c.id}"><span class="em">${c.emoji}</span><span style="flex:1"><span class="t">${c.name}</span><br><span class="s">${c.org}</span></span></button>`).join('')}</div>
             <div class="grid3" style="grid-template-columns:repeat(4,1fr)">${A().DONATION_AMOUNTS.map((a) => `<button class="spice" data-amt="${a}" aria-pressed="${st.amount === a}" style="height:52px">${K.money(a)}</button>`).join('')}</div>` : ''}
           ${st.mode !== 'gift' ? '' : `${f && Object.values(f.likes || {}).some(Boolean) ? `<a class="micro" href="#/friend/${f.id}">מה משמח את ${esc(f.name)} ›</a>` : ''}
-          <div class="col" style="gap:12px">${list.map((p) => K.prodCard(p, { on: st.pid === p.id, badge: f && A().likedBy(f.id, p) ? `❤ ${f.name} ${K.gv(f, 'אוהבת', 'אוהב')}` : '', badgeCls: 'pink' })).join('')}</div>
+          <div class="col" style="gap:12px">${list.map((p) => K.prodCard(p, { on: st.pid === p.id, badge: f && A().likedBy(f.id, p) ? ` ${f.name} ${K.gv(f, 'אוהבת', 'אוהב')}` : '', badgeCls: 'pink' })).join('')}</div>
           ${st.more ? '' : '<button class="link" id="more">עוד ›</button>'}`}
-        </section>
+</section>
         ${canSchedule ? `<label class="check"><input type="checkbox" id="bd" ${st.onBday ? 'checked' : ''}><span>לשלוח ביום ההולדת ב-00:00<span class="sub">בעוד ${days} ימים · ${K.bdayText(f.birthday)}</span></span></label>` : ''}
         ${ready ? `<section class="col"><h3>ככה זה ייראה:</h3>
           <div class="card pink wcard"><div class="head">${K.av(A().me())}<div class="body"><div class="k">You've been KARMAd 😇</div><b>${esc(A().me().name)}: ${occ.name} ${occ.emoji}</b>${st.msg ? `<div class="small">${esc(st.msg)}</div>` : ''}</div>${pick && st.mode === 'gift' ? `<span style="font-size:26px">${pick.emoji}</span>` : causeP ? `<span style="font-size:26px">${causeP.emoji}</span>` : ''}</div></div></section>` : ''}
         <div class="stack-bottom">
           <button class="btn pink" id="send" ${ready ? '' : 'disabled'}>${!ready ? 'לשלוח 😇' : st.mode === 'donate' ? `לתרום ${K.money(st.amount)} ולשלוח` : st.mode === 'gift' && pick ? `לשלם ${K.money(pick.price)} ולשלוח` : f.invited ? `${K.ICON.wa}<span>לשלוח בוואטסאפ 😇</span>` : 'לשלוח 😇'}</button>
-        </div>`);
+</div>`);
       K.wireBack('good');
       K.wirePicker((fid) => { st.to = fid; draw(); });
       K.on('[data-o]', 'click', (e) => { st.occ = e.currentTarget.dataset.o; st.onBday = st.occ === 'bday'; draw(); });
@@ -56,7 +56,7 @@
       K.on('#send', 'click', async () => {
         try {
           if (st.mode === 'gift' && pick && !(await K.pay(pick.price, `${pick.emoji} ${pick.name} · ${pick.biz.name}`))) return;
-          if (don && !(await K.pay(don.amount, `💝 תרומה · ${causeP.name}`))) return;
+          if (don && !(await K.pay(don.amount, ` תרומה · ${causeP.name}`))) return;
           const k = await A().sendKarma({ to: st.to, occasion: st.occ, message: st.msg.trim(), productId: st.mode === 'gift' ? st.pid : null, donation: don, onBirthday: canSchedule && st.onBday });
           if (f.invited) K.shareWA(K.inviteText('karma'));
           K.go('karma/' + k.id + '?sent=1');
@@ -83,18 +83,18 @@
         ${k.message ? `<span style="font-size:18px">"${esc(k.message)}"</span>` : ''}
         <span class="small muted">— ${esc(f.name)}</span></div>
       ${g ? `<div class="card row"><span style="font-size:36px">${g.product.emoji}</span><div style="flex:1"><b>${esc(g.product.name)}</b><div class="small">${esc(g.product.biz.name)} · ${esc(g.product.biz.address)}</div><div class="micro">${g.status === 'active' ? K.validity(g) : 'מומש ✓'}</div></div></div>` : ''}
-      ${k.cause ? `<div class="card row"><span style="font-size:36px">${k.cause.emoji}</span><div style="flex:1"><b>נתרמו בשמך ${K.money(k.donation.amount)}</b><div class="small">${esc(k.cause.name)} · ${esc(k.cause.org)}</div></div><span class="pill pink">תעודה 💝</span></div>` : ''}
-      <p class="center small" style="margin:0">${K.U('ולא, אין שום חובה להחזיר 😉', 'ולא, את לא חייבת כלום בחזרה 😉', 'ולא, אתה לא חייב כלום בחזרה 😉')}</p>
+      ${k.cause ? `<div class="card row"><span style="font-size:36px">${k.cause.emoji}</span><div style="flex:1"><b>נתרמו בשמך ${K.money(k.donation.amount)}</b><div class="small">${esc(k.cause.name)} · ${esc(k.cause.org)}</div></div><span class="pill pink">תעודה</span></div>` : ''}
+      <p class="center small" style="margin:0">${K.U('ולא, אין שום חובה להחזיר ', 'ולא, את לא חייבת כלום בחזרה ', 'ולא, אתה לא חייב כלום בחזרה')}</p>
       <div class="stack-bottom">
-        ${g && g.status === 'active' ? `<a class="btn lime" href="#/redeem/${g.id}">לממש 🎁</a>` : ''}
-        <button class="btn md white" id="thx" ${k.thankedByMe ? 'disabled' : ''}>${k.thankedByMe ? 'התודה נשלחה 💌' : 'לשלוח תודה 💌'}</button>
+        ${g && g.status === 'active' ? `<a class="btn lime" href="#/redeem/${g.id}">לממש</a>` : ''}
+        <button class="btn md white" id="thx" ${k.thankedByMe ? 'disabled' : ''}>${k.thankedByMe ? 'התודה נשלחה ' : 'לשלוח תודה '}</button>
         <a class="link" href="#/new-karma?to=${f.id}">להחזיר גוד קארמה</a>
-      </div>`, {
+</div>`, {
       theme: 'hotpink',
       moment: { close: '', share: () => K.shareStory({ bg: 'pink', kicker: "You've been KARMAd 😇", big: 'GOOD KARMA', bigLtr: true, card: { lines: [`${k.occ.name} ${k.occ.emoji}`, `מ${f.name}`], fill: 'white' }, sub: k.message || '' }, 'good-karma') },
     });
     if (first) { A().setOnboarded(); A().clearInvite(); }
-    K.on('#thx', 'click', async () => { await A().thank(id); K.toast(`התודה נשלחה ל${f.name} 💌`); K.routeNow(); });
+    K.on('#thx', 'click', async () => { await A().thank(id); K.toast(`התודה נשלחה ל${f.name}`); K.routeNow(); });
     K.askBirthday();
   });
 
@@ -104,15 +104,15 @@
     K.render(`
       ${sent ? '' : K.header('גוד קארמה ששלחת')}
       ${sent ? `<div class="col center" style="gap:8px;margin-top:30px"><div style="font-size:64px">😇</div><h1>${scheduled ? 'מתוזמן!' : 'נשלח!'}</h1>
-        <p style="margin:0">${scheduled ? `תגיע ל${esc(f.name)} ב-00:00 ביום ההולדת 🎂` : `${esc(f.name)} ${K.gv(f, 'קיבלה', 'קיבל')} התראה עכשיו.`}</p></div>` : ''}
+        <p style="margin:0">${scheduled ? `תגיע ל${esc(f.name)} ב-00:00 ביום ההולדת ` : `${esc(f.name)} ${K.gv(f, 'קיבלה', 'קיבל')} התראה עכשיו.`}</p></div>` : ''}
       <div class="card pink wcard"><div class="head">${K.av(f)}<div class="body"><b>ל${esc(f.name)}: ${k.occ.name} ${k.occ.emoji}</b>${k.message ? `<div class="small">"${esc(k.message)}"</div>` : ''}</div>${k.gift ? `<span style="font-size:26px">${k.gift.product.emoji}</span>` : ''}</div>
-        <div class="micro">${scheduled ? `⏰ ${K.whenFuture(k.deliverAt)}` : K.timeAgo(k.deliverAt)}${k.thanked ? ` · 💌 ${esc(f.name)} ${K.gv(f, 'אמרה', 'אמר')} תודה` : ''}</div></div>
+        <div class="micro">${scheduled ? ` ${K.whenFuture(k.deliverAt)}` : K.timeAgo(k.deliverAt)}${k.thanked ? ` · ${esc(f.name)} ${K.gv(f, 'אמרה', 'אמר')} תודה` : ''}</div></div>
       ${k.cause ? `<div class="card row"><span style="font-size:30px">${k.cause.emoji}</span><div style="flex:1"><b>תרמת ${K.money(k.donation.amount)} בשם ${esc(f.name)}</b><div class="small">${esc(k.cause.name)} · ${esc(k.cause.org)} · הקבלה תישלח למייל</div></div></div>` : ''}
-      ${k.gift ? `<p class="micro muted center" style="margin:0">🔒 לא נודיע לך מתי ${K.gv(f, 'היא', 'הוא')} ${K.gv(f, 'מממשת', 'מממש')}. זה רק ${K.gv(f, 'שלה', 'שלו')}.</p>` : ''}
+      ${k.gift ? `<p class="micro muted center" style="margin:0"> לא נודיע לך מתי ${K.gv(f, 'היא', 'הוא')} ${K.gv(f, 'מממשת', 'מממש')}. זה רק ${K.gv(f, 'שלה', 'שלו')}.</p>` : ''}
       <div class="stack-bottom">
         ${f.invited ? `<button class="btn md white" id="wa">${K.ICON.wa}<span>לשלוח שוב בוואטסאפ</span></button>` : ''}
         ${sent ? `<a class="btn" href="#/good">סגור</a>` : ''}
-      </div>`, { theme: sent ? 'pink' : '' });
+</div>`, { theme: sent ? 'pink' : '' });
     K.wireBack('good');
     K.on('#wa', 'click', () => K.shareWA(K.inviteText('karma')));
     if (sent) K.askBirthday();
@@ -129,12 +129,12 @@
     const row = (k) => {
       const sched = new Date(k.deliverAt) > new Date();
       return `<a class="beef" href="#/karma/${k.id}">${K.av(k.friend)}<span class="body"><span class="reason">${k.occ.emoji} ${k.occ.name}${k.message ? ` · ${esc(k.message)}` : ''}</span>
-        <span class="meta">${tab === 'got' ? 'מ' : 'ל'}${esc(k.friend.name)} · ${sched ? '⏰ ' + K.whenFuture(k.deliverAt) : K.timeAgo(k.deliverAt)}</span></span>${k.gift ? `<span style="font-size:22px">${k.gift.product.emoji}</span>` : ''}</a>`;
+        <span class="meta">${tab === 'got' ? 'מ' : 'ל'}${esc(k.friend.name)} · ${sched ? ' ' + K.whenFuture(k.deliverAt) : K.timeAgo(k.deliverAt)}</span></span>${k.gift ? `<span style="font-size:22px">${k.gift.product.emoji}</span>` : ''}</a>`;
     };
     K.render(`
       ${K.header('גוד קארמה 😇')}
-            ${soon.length ? `<section class="col"><h2>🎂 בקרוב</h2><div class="list">${soon.map(({ f, d }) => `<a href="#/new-karma?to=${f.id}&occ=bday">${K.av(f, 'sm')}<span class="grow"><b>${esc(f.name)}</b> · ${K.bdayText(f.birthday)}</span><span class="pill ${d <= 7 ? 'pink' : ''}">${d === 0 ? 'היום!' : d === 1 ? 'מחר' : `עוד ${d} ימים`}</span></a>`).join('')}</div></section>`
-        : `<a class="card lav row" href="#/new-karma?occ=thanks" style="text-decoration:none"><span style="font-size:28px">🙏</span><b style="flex:1">מתי בפעם האחרונה אמרת תודה למישהו?</b>${K.ICON.fwd}</a>`}
+            ${soon.length ? `<section class="col"><h2> בקרוב</h2><div class="list">${soon.map(({ f, d }) => `<a href="#/new-karma?to=${f.id}&occ=bday">${K.av(f, 'sm')}<span class="grow"><b>${esc(f.name)}</b> · ${K.bdayText(f.birthday)}</span><span class="pill ${d <= 7 ? 'pink' : ''}">${d === 0 ? 'היום!' : d === 1 ? 'מחר' : `עוד ${d} ימים`}</span></a>`).join('')}</div></section>`
+        : `<a class="card lav row" href="#/new-karma?occ=thanks" style="text-decoration:none"><span style="font-size:28px"></span><b style="flex:1">מתי בפעם האחרונה אמרת תודה למישהו?</b>${K.ICON.fwd}</a>`}
       <a class="btn pink" href="#/new-karma">לשלוח גוד קארמה 😇</a>
       <div class="seg"><button data-t="got" aria-pressed="${tab === 'got'}">קיבלתי</button><button data-t="sent" aria-pressed="${tab === 'sent'}">שלחתי</button></div>
       <div class="col">${list.map(row).join('') || `<p class="muted center">${tab === 'got' ? 'עוד לא קיבלת. זה יגיע 😇' : 'עוד לא שלחת. מישהו בטוח מחכה.'}</p>`}</div>`, { nav: 'good' });
@@ -153,9 +153,9 @@
       <h1>המתנות שלי</h1>
       <div class="tabs" role="tablist"><button class="tab" role="tab" data-t="active" aria-selected="${tab === 'active'}">למימוש (${w.active.length})</button><button class="tab" role="tab" data-t="used" aria-selected="${tab === 'used'}">מומשו (${w.used.length})</button></div>
       ${tab === 'active' ? `
-        ${soon.length ? `<section class="col"><h2>⏳ עומד לפוג</h2>${soon.map(K.giftCard).join('')}</section>` : ''}
+        ${soon.length ? `<section class="col"><h2> עומד לפוג</h2>${soon.map(K.giftCard).join('')}</section>` : ''}
         ${rest.length ? `<section class="col">${soon.length ? '<h2>עוד מחכות לך</h2>' : ''}${rest.map(K.giftCard).join('')}</section>` : ''}
-        ${!w.active.length ? `<div class="card cream center col" style="padding:28px"><div style="font-size:44px">🎁</div><h2>עוד אין כאן מתנות</h2><p class="muted" style="margin:0">אבל הכול חוזר 😉</p></div>` : ''}
+        ${!w.active.length ? `<div class="card cream center col" style="padding:28px"><div style="font-size:44px"></div><h2>עוד אין כאן מתנות</h2><p class="muted" style="margin:0">אבל הכול חוזר</p></div>` : ''}
 `
         : `<div class="col">${w.used.map(K.giftCard).join('') || '<p class="muted center">עוד לא מימשת כלום.</p>'}</div>`}`, { nav: 'wallet' });
     K.on('[data-t]', 'click', (e) => K.go('wallet?tab=' + e.currentTarget.dataset.t));
@@ -178,15 +178,15 @@
         <div class="code" aria-label="קוד ידני">${g.code.slice(0, 3)}-${g.code.slice(3)}</div>
         <div class="clock"><span class="pulse"></span><span id="clk"></span></div>
         <span class="micro muted">המסך חי. צילום מסך לא עובר בקופה.</span>
-      </div>
+</div>
       <button class="btn lime" id="pin">מסירה לצוות · הקלדת קוד העסק</button>
       <div class="list">
-        <div><span>🧾</span><span class="grow"><b>מה כלול:</b> ${esc(p.includes)}</span></div>
-        <div><span>📍</span><span class="grow">${esc(b.address)}</span></div>
-        <div><span>🕐</span><span class="grow">${esc(b.hours)}</span></div>
-        <div><span>📅</span><span class="grow">בתוקף עד ${K.dateShort(g.expiresAt)}</span></div>
-        <div><span>💝</span><span class="grow">מ${esc(g.fromP.name)} · ${K.sourceText(g)}</span></div>
-      </div>`, { theme: 'dark' });
+        <div><span></span><span class="grow"><b>מה כלול:</b> ${esc(p.includes)}</span></div>
+        <div><span></span><span class="grow">${esc(b.address)}</span></div>
+        <div><span></span><span class="grow">${esc(b.hours)}</span></div>
+        <div><span></span><span class="grow">בתוקף עד ${K.dateShort(g.expiresAt)}</span></div>
+        <div><span></span><span class="grow">מ${esc(g.fromP.name)} · ${K.sourceText(g)}</span></div>
+</div>`, { theme: 'dark' });
     K.wireBack('wallet');
     const clk = document.getElementById('clk');
     const tick = () => { if (!document.body.contains(clk)) return clearInterval(timer); clk.textContent = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
@@ -203,7 +203,7 @@
         <p class="center small" style="margin:0">מקלידים את הקוד של העסק (4 ספרות) כדי לסמן ש${esc(g.product.name)} נמסר.</p>
         <div class="pindots" aria-live="polite" aria-label="${pin.length} ספרות">${[0, 1, 2, 3].map((i) => `<i class="${i < pin.length ? 'on' : ''}"></i>`).join('')}</div>
         ${err ? `<div class="warn center">${esc(err)}</div>` : ''}
-        <div class="pinpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map((n) => n === '' ? '<span></span>' : `<button data-n="${n}" aria-label="${n === '⌫' ? 'מחיקה' : n}">${n}</button>`).join('')}</div>
+        <div class="pinpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, ''].map((n) => n === '' ? '<span></span>' : `<button data-n="${n}" aria-label="${n === '' ? 'מחיקה' : n}">${n}</button>`).join('')}</div>
         <p class="micro muted center" style="margin:0">בהדגמה הקוד של ${esc(g.product.biz.name)} הוא ${g.product.biz.pin}</p>
         <button class="btn ghost" data-close>ביטול</button></div>`;
     };
@@ -213,7 +213,7 @@
       if (e.target === bg || e.target.closest('[data-close]')) return bg.remove();
       const b = e.target.closest('[data-n]'); if (!b) return;
       const n = b.dataset.n;
-      pin = n === '⌫' ? pin.slice(0, -1) : (pin + n).slice(0, 4);
+      pin = n === '' ? pin.slice(0, -1) : (pin + n).slice(0, 4);
       paint();
       if (pin.length === 4) {
         try { await A().redeem(g.id, pin); bg.remove(); done(A().gift(g.id), true); }
@@ -231,11 +231,11 @@
         <div style="font-size:64px">${g.product.emoji}</div>
         <h1>${esc(g.product.name)}</h1>
         <p class="small" style="margin:0">${esc(g.product.biz.name)} · ${t.toLocaleDateString('he-IL')} ${t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</p>
-        ${fresh ? '<h2>בתיאבון! 😋</h2>' : ''}
-      </div>
+        ${fresh ? '<h2>בתיאבון!</h2>' : ''}
+</div>
       <div class="stack-bottom">
-        <a class="btn pink" href="#/new-karma?to=${g.from}&occ=thanks">לשלוח תודה ל${esc(g.fromP.name)} 💌</a>
+        <a class="btn pink" href="#/new-karma?to=${g.from}&occ=thanks">לשלוח תודה ל${esc(g.fromP.name)}</a>
         <a class="btn ghost" href="#/wallet">למתנות שלי</a>
-      </div>`, { theme: 'lime' });
+</div>`, { theme: 'lime' });
   }
 })();

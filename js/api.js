@@ -15,13 +15,13 @@
   const GESTURES = {
     apology: { id: 'apology', emoji: '🙏', name: 'סליחה', desc: 'בלי מתנה. צריך אישור' },
   };
-  const PRESETS = ['אכלת לי את הצ׳יפס 🍟', 'איחרת. שוב. ⏰', 'השארת אותי על וי כחול 💬', 'לקחת בגד ולא החזרת 👕', 'ספוילרת לי סדרה 📺', 'ביטלת ברגע האחרון 🙃', 'שכחת להחזיר כסף 💸', 'לא אמרת לי מזל טוב 🎂'];
+  const PRESETS = ['אכלת לי את הצ׳יפס', 'איחרת. שוב.', 'השארת אותי על וי כחול', 'לקחת בגד ולא החזרת', 'ספוילרת לי סדרה', 'ביטלת ברגע האחרון', 'שכחת להחזיר כסף', 'לא אמרת לי מזל טוב'];
   const OCCASIONS = [
-    { id: 'miss', emoji: '🫶', name: 'סתם כי התגעגעתי' },
-    { id: 'thanks', emoji: '🙏', name: 'תודה' },
-    { id: 'congrats', emoji: '🥂', name: 'מזל טוב' },
-    { id: 'luck', emoji: '🍀', name: 'בהצלחה' },
-    { id: 'bday', emoji: '🎂', name: 'יום הולדת שמח' },
+    { id: 'miss', emoji: '', name: 'סתם כי התגעגעתי' },
+    { id: 'thanks', emoji: '', name: 'תודה' },
+    { id: 'congrats', emoji: '', name: 'מזל טוב' },
+    { id: 'luck', emoji: '', name: 'בהצלחה' },
+    { id: 'bday', emoji: '', name: 'יום הולדת שמח' },
   ];
   // Sample causes for "donate in someone's name" (real nonprofits are signed up later).
   const CAUSES = [
@@ -71,19 +71,19 @@
       g5: gift('g5', 'f-dani', 'me', 'p-cookies', 'bet', 'bt9', ago(12 * D), 30, 'active'),
     };
     const beefs = {
-      b1: { id: 'b1', from: 'f-maya', to: 'me', reason: 'אכלת לי את הצ׳יפס 🍟', spice: 2, status: 'open', createdAt: ago(2 * H) },
-      b2: { id: 'b2', from: 'f-itai', to: 'me', reason: 'השארת אותי על וי כחול 💬', spice: 1, status: 'open', createdAt: ago(5 * D) },
-      b3: { id: 'b3', from: 'me', to: 'f-noy', reason: 'ספוילרת לי את הפרק האחרון 📺', spice: 3, status: 'open', createdAt: ago(26 * H) },
-      b4: { id: 'b4', from: 'me', to: 'f-maya', reason: 'ביטלת ברגע האחרון 🙃', spice: 1, status: 'pending', gesture: 'apology', gestureAt: ago(40 * 60e3), createdAt: ago(30 * H) },
-      b5: { id: 'b5', from: 'me', to: 'f-itai', reason: 'לקחת לי את המטען ולא החזרת 🔌', spice: 2, status: 'settled', closedBy: 'gift', giftId: 'g1', createdAt: ago(3 * D + 40 * 60e3), closedAt: ago(3 * D) },
-      b6: { id: 'b6', from: 'f-noy', to: 'me', reason: 'איחרת. שוב. ⏰', spice: 1, status: 'settled', closedBy: 'gesture', gesture: 'apology', createdAt: ago(15 * D), closedAt: ago(14 * D) },
-      b7: { id: 'b7', from: 'f-dani', to: 'me', reason: 'שכחת להחזיר כסף 💸', spice: 2, status: 'settled', closedBy: 'gesture', gesture: 'apology', createdAt: ago(9 * D), closedAt: ago(9 * D - 2 * H) },
-      b8: { id: 'b8', from: 'me', to: 'f-shira', reason: 'לא אמרת לי מזל טוב 🎂', spice: 1, status: 'released', closedBy: 'release', createdAt: ago(12 * D), closedAt: ago(11 * D) },
+      b1: { id: 'b1', from: 'f-maya', to: 'me', reason: 'אכלת לי את הצ׳יפס', spice: 2, status: 'open', createdAt: ago(2 * H) },
+      b2: { id: 'b2', from: 'f-itai', to: 'me', reason: 'השארת אותי על וי כחול', spice: 1, status: 'open', createdAt: ago(5 * D) },
+      b3: { id: 'b3', from: 'me', to: 'f-noy', reason: 'ספוילרת לי את הפרק האחרון', spice: 3, status: 'open', createdAt: ago(26 * H) },
+      b4: { id: 'b4', from: 'me', to: 'f-maya', reason: 'ביטלת ברגע האחרון', spice: 1, status: 'pending', gesture: 'apology', gestureAt: ago(40 * 60e3), createdAt: ago(30 * H) },
+      b5: { id: 'b5', from: 'me', to: 'f-itai', reason: 'לקחת לי את המטען ולא החזרת', spice: 2, status: 'settled', closedBy: 'gift', giftId: 'g1', createdAt: ago(3 * D + 40 * 60e3), closedAt: ago(3 * D) },
+      b6: { id: 'b6', from: 'f-noy', to: 'me', reason: 'איחרת. שוב.', spice: 1, status: 'settled', closedBy: 'gesture', gesture: 'apology', createdAt: ago(15 * D), closedAt: ago(14 * D) },
+      b7: { id: 'b7', from: 'f-dani', to: 'me', reason: 'שכחת להחזיר כסף', spice: 2, status: 'settled', closedBy: 'gesture', gesture: 'apology', createdAt: ago(9 * D), closedAt: ago(9 * D - 2 * H) },
+      b8: { id: 'b8', from: 'me', to: 'f-shira', reason: 'לא אמרת לי מזל טוב', spice: 1, status: 'released', closedBy: 'release', createdAt: ago(12 * D), closedAt: ago(11 * D) },
     };
     const karma = {
-      k1: { id: 'k1', from: 'f-maya', to: 'me', occasion: 'luck', message: 'שוברים את המבחן מחר 💪', giftId: 'g2', createdAt: ago(25 * D), deliverAt: ago(25 * D), thanked: true },
+      k1: { id: 'k1', from: 'f-maya', to: 'me', occasion: 'luck', message: 'שוברים את המבחן מחר', giftId: 'g2', createdAt: ago(25 * D), deliverAt: ago(25 * D), thanked: true },
       k2: { id: 'k2', from: 'me', to: 'f-maya', occasion: 'miss', message: 'סתם. כי את מאיה.', giftId: 'g4', createdAt: ago(2 * D), deliverAt: ago(2 * D), thanked: true },
-      k3: { id: 'k3', from: 'f-noy', to: 'me', occasion: 'thanks', message: 'על ההסעה בשתיים בלילה 🚗', giftId: 'g3', createdAt: ago(20 * D), deliverAt: ago(20 * D), thanked: true },
+      k3: { id: 'k3', from: 'f-noy', to: 'me', occasion: 'thanks', message: 'על ההסעה בשתיים בלילה', giftId: 'g3', createdAt: ago(20 * D), deliverAt: ago(20 * D), thanked: true },
       k4: { id: 'k4', from: 'f-shira', to: 'me', occasion: 'miss', message: 'ראיתי מם וחשבתי עלייך', giftId: null, createdAt: ago(4 * H), deliverAt: ago(4 * H), thanked: false },
       k5: { id: 'k5', from: 'me', to: 'f-itai', occasion: 'thanks', message: 'על המעבר דירה. גב של ברזל.', giftId: null, createdAt: ago(8 * D), deliverAt: ago(8 * D), thanked: false },
       k6: { id: 'k6', from: 'f-dani', to: 'me', occasion: 'congrats', message: 'על העבודה החדשה!!', giftId: null, donation: { cause: 'dogs', amount: 36 }, createdAt: ago(10 * D), deliverAt: ago(10 * D), thanked: true },
@@ -100,14 +100,14 @@
     };
     const n = (id, kind, title, body, link, at, read) => ({ id, kind, title, body, link, createdAt: at, read: !!read });
     const notifs = [
-      n('n1', 'beef', "You've been KARMAd 😈", 'למאיה יש ביף איתך: אכלת לי את הצ׳יפס 🍟', 'beef/b1', ago(2 * H)),
+      n('n1', 'beef', "You've been KARMAd 😈", 'למאיה יש ביף איתך: אכלת לי את הצ׳יפס', 'beef/b1', ago(2 * H)),
       n('n3', 'karma', "You've been KARMAd 😇", 'שירה שלחה לך גוד קארמה', 'karma/k4', ago(4 * H)),
-      n('n4', 'gesture', 'מאיה ביקשה סליחה 🙏', 'על "ביטלת ברגע האחרון". סגרנו?', 'mine/b4', ago(40 * 60e3)),
-      n('n5', 'expiring', 'הגלידה מחכה לך 🍦', 'הגלידה של שלום תפוג בעוד 5 ימים', 'wallet', ago(26 * H), true),
-      n('n7', 'closed', 'תיק סגור ✓', 'איתי סגר את החשבון בקפה ☕', 'closed/b5', ago(3 * D), true),
+      n('n4', 'gesture', 'מאיה ביקשה סליחה', 'על "ביטלת ברגע האחרון". סגרנו?', 'mine/b4', ago(40 * 60e3)),
+      n('n5', 'expiring', 'הגלידה מחכה לך', 'הגלידה של שלום תפוג בעוד 5 ימים', 'wallet', ago(26 * H), true),
+      n('n7', 'closed', 'תיק סגור ✓', 'איתי סגר את החשבון בקפה', 'closed/b5', ago(3 * D), true),
     ];
     return {
-      v: 4, signedIn: false, onboarded: false, invite: null, tipSeen: false, bdayAsked: false,
+      v: 5, signedIn: false, onboarded: false, invite: null, tipSeen: false, bdayAsked: false,
       me: { id: 'me', name: 'אור', email: 'or@gmail.com', color: 'pink', joined: ago(200 * D), pronoun: null, birthday: null, likes: {}, notif: { digest: '18:00', quiet: true } },
       friends, businesses, gifts: BETS ? gifts : (delete gifts.g5, gifts), beefs, karma, bets: BETS ? bets : {}, notifs, events: [], sales: synthSales(),
     };
@@ -157,7 +157,7 @@
     GESTURES, PRESETS, OCCASIONS, BET_CATS, BIZ_TYPES, CAUSES, DONATION_AMOUNTS,
     async init() {
       try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
-      if (!S || S.v !== 4) { S = seed(); save(); }
+      if (!S || S.v !== 5) { S = seed(); save(); }
       save();
     },
     log(name, props) { if (!S) return; S.events.push({ name, props, at: Date.now() }); if (S.events.length > 300) S.events.splice(0, 100); save(); },
@@ -183,8 +183,8 @@
     setInvite(kind) {
       if (!kind) { S.invite = null; save(); return; }
       S.invite = { from: 'f-maya', kind, approved: false };
-      if (kind === 'beef' && !S.beefs.b0) S.beefs.b0 = { id: 'b0', from: 'f-maya', to: 'me', reason: 'לקחת לי את המטען ולא החזרת 🔌', spice: 2, status: 'open', createdAt: ago(10 * 60e3), hidden: true };
-      if (kind === 'karma' && !S.karma.k0) S.karma.k0 = { id: 'k0', from: 'f-maya', to: 'me', occasion: 'miss', message: 'ברוכים הבאים ל-KARMA. 🫶', giftId: null, createdAt: ago(10 * 60e3), deliverAt: ago(10 * 60e3), thanked: false, hidden: true };
+      if (kind === 'beef' && !S.beefs.b0) S.beefs.b0 = { id: 'b0', from: 'f-maya', to: 'me', reason: 'לקחת לי את המטען ולא החזרת', spice: 2, status: 'open', createdAt: ago(10 * 60e3), hidden: true };
+      if (kind === 'karma' && !S.karma.k0) S.karma.k0 = { id: 'k0', from: 'f-maya', to: 'me', occasion: 'miss', message: 'ברוכים הבאים ל-KARMA.', giftId: null, createdAt: ago(10 * 60e3), deliverAt: ago(10 * 60e3), thanked: false, hidden: true };
       save();
     },
     invite() { return S.invite && Object.assign({}, S.invite, { fromP: who(S.invite.from), beef: decorate(S.beefs.b0), karma: S.karma.k0 }); },
@@ -316,10 +316,10 @@
           if (spice === 3) {
             const g = makeGift(to, 'me', 'p-pastry', 'beef', b.id);
             Object.assign(x, { status: 'settled', closedBy: 'gift', giftId: g.id, closedAt: new Date().toISOString() });
-            notify('closed', 'תיק סגור ✓', `${f.name} סגר${f.p === 'f' ? 'ה' : ''} את החשבון. מחכה לך משהו 🎁`, 'closed/' + b.id);
+            notify('closed', 'תיק סגור ✓', `${f.name} סגר${f.p === 'f' ? 'ה' : ''} את החשבון. מחכה לך משהו`, 'closed/' + b.id);
           } else {
             Object.assign(x, { status: 'pending', gesture: 'apology', gestureAt: new Date().toISOString() });
-            notify('gesture', `${f.name} ${K.G(f.p, 'ביקשה', 'ביקש')} סליחה 🙏`, `על "${reason}". סגרנו?`, 'mine/' + b.id);
+            notify('gesture', `${f.name} ${K.G(f.p, 'ביקשה', 'ביקש')} סליחה`, `על "${reason}". סגרנו?`, 'mine/' + b.id);
           }
         });
       }
@@ -343,10 +343,10 @@
         const x = S.beefs[id]; if (x.status !== 'pending') return;
         if (x.spice === 3) {
           Object.assign(x, { status: 'wantmore', wantMoreAt: new Date().toISOString() });
-          notify('wantmore', `${f.name} ${K.G(f.p, 'רוצה', 'רוצה')} יותר 😤`, `סליחה לא מספיקה ל${f.name}. אולי קפה?`, 'beef/' + id);
+          notify('wantmore', `${f.name} ${K.G(f.p, 'רוצה', 'רוצה')} יותר`, `סליחה לא מספיקה ל${f.name}. אולי קפה?`, 'beef/' + id);
         } else {
           Object.assign(x, { status: 'settled', closedBy: 'gesture', closedAt: new Date().toISOString() });
-          notify('closed', 'סגרנו! 🤝', `${f.name} ${K.G(f.p, 'סלחה', 'סלח')} 🙏`, 'closed/' + id);
+          notify('closed', 'סגרנו!', `${f.name} ${K.G(f.p, 'סלחה', 'סלח')}`, 'closed/' + id);
         }
       });
       return decorate(b);
@@ -362,7 +362,7 @@
           const x = S.beefs[id]; if (x.status !== 'wantmore') return;
           const g = makeGift(b.to, 'me', 'p-coffee', 'beef', id);
           Object.assign(x, { status: 'settled', closedBy: 'gift', giftId: g.id, closedAt: new Date().toISOString() });
-          notify('closed', 'תיק סגור ✓', `${f.name} ${K.G(f.p, 'שדרגה', 'שדרג')} לקפה ☕`, 'closed/' + id);
+          notify('closed', 'תיק סגור ✓', `${f.name} ${K.G(f.p, 'שדרגה', 'שדרג')} לקפה`, 'closed/' + id);
         });
       }
       api.log('gesture_answer', { ok }); changed();
@@ -389,7 +389,7 @@
       if (productId) k.giftId = makeGift('me', to, productId, 'karma', k.id).id;
       S.karma[k.id] = k; api.log('karma_sent', { occasion, gift: !!productId, scheduled: !!onBirthday }); changed();
       const f = S.friends[to];
-      if (!onBirthday && f && !f.invited) later(8000, () => { S.karma[k.id].thanked = true; notify('thanks', `${f.name} ${K.G(f.p, 'שלחה', 'שלח')} תודה 💌`, 'על הגוד קארמה ששלחת', 'karma/' + k.id); });
+      if (!onBirthday && f && !f.invited) later(8000, () => { S.karma[k.id].thanked = true; notify('thanks', `${f.name} ${K.G(f.p, 'שלחה', 'שלח')} תודה`, 'על הגוד קארמה ששלחת', 'karma/' + k.id); });
       return api.karmaItem(k.id);
     },
     async thank(id) { S.karma[id].thanked = true; S.karma[id].thankedByMe = true; api.log('thanks_sent', {}); changed(); },
@@ -435,7 +435,7 @@
       const b = Object.assign({ id: uid('bt'), from: 'me', status: 'pending', claims: {}, createdAt: new Date().toISOString() }, o);
       S.bets[b.id] = b; api.log('bet_created', { stake: o.stake }); changed();
       const f = S.friends[o.to];
-      if (f && !f.invited) later(6000, () => { const x = S.bets[b.id]; if (x.status !== 'pending') return; x.status = 'active'; notify('bet', `${f.name} ${K.G(f.p, 'בפנים', 'בפנים')} 🥊`, o.topic, 'bet/' + b.id); });
+      if (f && !f.invited) later(6000, () => { const x = S.bets[b.id]; if (x.status !== 'pending') return; x.status = 'active'; notify('bet', `${f.name} ${K.G(f.p, 'בפנים', 'בפנים')}`, o.topic, 'bet/' + b.id); });
       return api.bet(b.id);
     },
     async respondBet(id, yes) { S.bets[id].status = yes ? 'active' : 'declined'; api.log('bet_answer', { yes }); changed(); return api.bet(id); },
@@ -453,7 +453,7 @@
         if (b.stake === 'gift' && winner === 'me') {
           // the friend lost: in the demo they pay a few seconds later, the gift lands in my wallet
           const f = S.friends[fid];
-          later(7000, () => { if (S.bets[id].giftId) return; const g = makeGift(fid, 'me', b.productId, 'bet', id); S.bets[id].giftId = g.id; notify('gift', `${f.name} ${K.G(f.p, 'שילמה', 'שילם')} על ההפסד 😅`, `${product(b.productId).emoji} מחכה לך ב"המתנות שלי"`, 'wallet'); });
+          later(7000, () => { if (S.bets[id].giftId) return; const g = makeGift(fid, 'me', b.productId, 'bet', id); S.bets[id].giftId = g.id; notify('gift', `${f.name} ${K.G(f.p, 'שילמה', 'שילם')} על ההפסד`, `${product(b.productId).emoji} מחכה לך ב"המתנות שלי"`, 'wallet'); });
         }
       }
       api.log('bet_claim', {}); changed(); return api.bet(id);

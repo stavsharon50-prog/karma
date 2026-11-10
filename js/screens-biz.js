@@ -19,27 +19,27 @@
       const toName = f ? f.name : st.waName.trim();
       const ready = p && toName && (st.why === 'good' || st.beefId);
       K.render(`
-        <div class="row between">${K.logo()}<span class="pill">📍 ${esc(b.name)}</span></div>
+        <div class="row between">${K.logo()}<span class="pill"> ${esc(b.name)}</span></div>
         <div class="card ${b.color || 'peach'} row"><span style="font-size:40px">${b.emoji}</span><div style="flex:1"><h2>${esc(b.name)}</h2><div class="small">${esc(b.address)}</div><div class="micro">${esc(b.hours)}</div></div></div>
-        ${b.paused ? '<div class="warn center">סגור זמנית. אפשר לחזור בקרוב 🙏</div>' : `
+        ${b.paused ? '<div class="warn center">סגור זמנית. אפשר לחזור בקרוב</div>' : `
         <h1>מגיע למישהו משהו?</h1>
         ${smart && !st.to ? `<button class="card lav row" id="smart" style="text-align:right;width:100%"><span style="font-size:28px">😈</span><span style="flex:1"><b>ל${esc(smart.friend.name)} יש ביף פתוח איתך</b><br><span class="small">"${esc(smart.reason)}". לסגור את זה מכאן?</span></span>${K.ICON.fwd}</button>` : ''}
         <section class="col"><h3>מה שולחים?</h3><div class="col" style="gap:10px">${b.products.map((x) => K.prodCard(Object.assign({}, x, { biz: b }), { on: st.pid === x.id })).join('')}</div></section>
         <section class="col"><h3>למי?</h3>
           ${signed ? K.friendPicker(st.to, { invite: false }) : ''}
           <input class="input" id="wa" placeholder="${signed ? 'או שם של מישהו שעוד לא ב-KARMA.' : 'השם של מי שמקבל'}" value="${esc(st.waName)}" maxlength="20">
-          ${!f && st.waName.trim() ? '<p class="micro muted" style="margin:0">💬 נשלח לו הזמנה בוואטסאפ עם המתנה.</p>' : ''}</section>
+          ${!f && st.waName.trim() ? '<p class="micro muted" style="margin:0"> נשלח לו הזמנה בוואטסאפ עם המתנה.</p>' : ''}</section>
         <section class="col"><h3>למה?</h3>
           <div class="seg"><button data-why="good" aria-pressed="${st.why === 'good'}">😇 גוד קארמה</button><button data-why="beef" aria-pressed="${st.why === 'beef'}">😈 לסגור ביף</button></div>
           ${st.why === 'good' ? `<div class="wrap">${A().OCCASIONS.map((o) => `<button class="chip" data-o="${o.id}" aria-pressed="${st.occ === o.id}">${o.emoji} ${o.name}</button>`).join('')}</div>`
             : beefsWith.length ? beefsWith.map((x) => `<button class="opt" data-beef="${x.id}" aria-pressed="${st.beefId === x.id}"><span class="em">😈</span><span style="flex:1"><span class="t">${esc(x.reason)}</span><br><span class="s">${K.timeAgo(x.createdAt)} · ${'🌶'.repeat(x.spice)}</span></span></button>`).join('')
             : `<p class="small muted" style="margin:0">${f ? `אין ביף פתוח עם ${esc(f.name)}. אולי גוד קארמה? 😇` : 'ביף אפשר לסגור רק עם חבר ב-KARMA.'}</p>`}
           ${st.why === 'good' ? `<input class="input" id="msg" placeholder="כמה מילים (לא חובה)" maxlength="120" value="${esc(st.msg)}"><div class="warn" id="mw" hidden></div>` : ''}
-        </section>
+</section>
         <div class="stack-bottom">
           <button class="btn lime" id="go" ${ready ? '' : 'disabled'}>${p ? `להמשיך · ${K.money(p.price)}` : 'בוחרים מה שולחים'}</button>
           ${!signed ? '<p class="micro muted center" style="margin:0">כניסה עם Apple או Google רגע לפני התשלום.</p>' : ''}
-        </div>`}`);
+</div>`}`);
       K.on('#smart', 'click', () => { Object.assign(st, { to: smart.friend.id, why: 'beef', beefId: smart.id, pid: st.pid || (b.products[0] || {}).id }); draw(); });
       K.on('.prod', 'click', (e) => { st.pid = e.currentTarget.dataset.pid; draw(); });
       K.on('.friend-pick[data-fid]', 'click', (e) => { st.to = e.currentTarget.dataset.fid; st.waName = ''; st.beefId = null; draw(); });
@@ -67,12 +67,12 @@
   });
   function doneQR(b, p, f, k) {
     K.render(`
-      <div class="col center" style="gap:12px;margin-top:36px"><div style="font-size:64px">${p.emoji}</div><h1>נשלח! 🎉</h1>
+      <div class="col center" style="gap:12px;margin-top:36px"><div style="font-size:64px">${p.emoji}</div><h1>נשלח!</h1>
         <p style="margin:0">${esc(p.name)} מ${esc(b.name)} מחכה ל${esc(f.name)}.</p></div>
       <div class="stack-bottom">
         ${f.invited ? `<button class="btn" id="wa">${K.ICON.wa}<span>לשלוח ל${esc(f.name)} בוואטסאפ</span></button>` : `<p class="center small">${esc(f.name)} ${K.gv(f, 'קיבלה', 'קיבל')} התראה עכשיו 😇</p>`}
         <a class="btn md white" href="#/">ל-KARMA. ›</a>
-      </div>`, { theme: 'pink' });
+</div>`, { theme: 'pink' });
     K.on('#wa', 'click', () => K.shareWA(K.inviteText('karma')));
   }
 
@@ -87,31 +87,31 @@
     const waiting = Object.entries(d.waiting).map(([pid, n]) => { const p = A().product(pid); return p ? `${n} ${p.name} ${p.emoji}` : ''; }).filter(Boolean);
     K.render(`
       <div class="row between"><div class="row" style="gap:8px"><span style="font-size:30px">${b.emoji}</span><div><h2>${esc(b.name)}</h2><span class="micro muted">הלוח של העסק · ${new Date().toLocaleString('he-IL', { month: 'long' })}</span></div></div>
-        <a class="icon-btn" href="#/biz/settings" aria-label="הגדרות">⚙️</a></div>
-      ${b.paused ? '<div class="warn center">⏸ העסק מושהה. מתנות קיימות עדיין בתוקף.</div>' : ''}
+        <a class="icon-btn" href="#/biz/settings" aria-label="הגדרות"></a></div>
+      ${b.paused ? '<div class="warn center"> העסק מושהה. מתנות קיימות עדיין בתוקף.</div>' : ''}
       <div class="kpis">
         <div class="kpi"><b>${d.sold}</b><span>נמכרו החודש</span></div>
         <div class="kpi"><b>${d.redeemed}</b><span>מומשו</span></div>
-      </div>
+</div>
       <div class="card lime col">
-        <div class="row between"><b>💰 מגיע לך</b><b class="display" style="font-size:30px">${K.money(firstMonth ? d.gross : d.due)}</b></div>
-        <div class="small">${firstMonth ? 'חודש ראשון בלי עמלה 🎉' : `מכירות ${K.money(d.gross)} · עמלת KARMA. 10% (${K.money(d.fee)})`}</div>
+        <div class="row between"><b> מגיע לך</b><b class="display" style="font-size:30px">${K.money(firstMonth ? d.gross : d.due)}</b></div>
+        <div class="small">${firstMonth ? 'חודש ראשון בלי עמלה ' : `מכירות ${K.money(d.gross)} · עמלת KARMA. 10% (${K.money(d.fee)})`}</div>
         <div class="micro">העברה הבאה: ${K.dateShort(d.nextPayout)} · הכסף שלך מרגע המכירה (אחרי 24 שעות לביטול)</div>
-      </div>
+</div>
       <div class="kpis">
-        <div class="kpi"><b>🆕 ${d.newCustomers}</b><span>לקוחות חדשים</span></div>
-        <div class="kpi"><b>🎁 ${Object.values(d.waiting).reduce((a, n) => a + n, 0)}</b><span>מתנות בדרך אליכם</span></div>
-      </div>
-      ${waiting.length ? `<p class="small" style="margin:0">בדרך אליכם: ${waiting.join(' · ')}</p>` : ''}
+        <div class="kpi"><b> ${d.newCustomers}</b><span>לקוחות חדשים</span></div>
+        <div class="kpi"><b> ${Object.values(d.waiting).reduce((a, n) => a + n, 0)}</b><span>מתנות בדרך אליכם</span></div>
+</div>
+      ${waiting.length ? `<p class="small" style="margin:0">בדרך אליכם: ${waiting.join(' ·')}</p>` : ''}
       <section class="col"><h2>מימושים אחרונים</h2>
         <div class="list">${d.recent.map((s) => `<div><span>${s.product.emoji}</span><span class="grow">${esc(s.product.name)}</span><span class="micro muted">${K.timeAgo(s.redeemedAt)}</span></div>`).join('') || '<div class="muted">עוד אין.</div>'}</div>
-        <p class="micro muted" style="margin:0">🔒 בלי שמות לקוחות. רק מה מומש ומתי.</p></section>
+        <p class="micro muted" style="margin:0"> בלי שמות לקוחות. רק מה מומש ומתי.</p></section>
       <div class="grid2">
-        <a class="btn md white" href="#/biz/settings">⚙️ הגדרות ומוצרים</a>
-        <a class="btn md white" href="#/biz/sticker">🏷 מדבקת QR</a>
-        <a class="btn md white" href="#/biz/guide">⏱ מדריך לצוות</a>
+        <a class="btn md white" href="#/biz/settings"> הגדרות ומוצרים</a>
+        <a class="btn md white" href="#/biz/sticker"> מדבקת QR</a>
+        <a class="btn md white" href="#/biz/guide"> מדריך לצוות</a>
         <a class="btn md white" href="https://wa.me/?text=${encodeURIComponent('היי, צריך עזרה עם KARMA.')}" target="_blank" rel="noopener">${K.ICON.wa}<span>תמיכה</span></a>
-      </div>
+</div>
       <a class="link muted micro" href="#/profile">חזרה לאפליקציה (הדגמה)</a>`);
   });
 
@@ -138,7 +138,7 @@
       <section class="col"><h2>השהיה</h2>
         <div class="list"><div><span class="grow"><b>להשהות את העסק</b><br><span class="micro muted">לא יימכרו מתנות חדשות. מתנות קיימות נשארות בתוקף.</span></span><button class="toggle" role="switch" id="pause" aria-checked="${!!b.paused}" aria-label="השהיה"></button></div></div></section>
       <section class="col"><h2>תשלומים</h2>
-        <div class="list"><div><span>🏦</span><span class="grow">חשבון ••• 4411<br><span class="micro muted">מנוהל אצל ספק הסליקה. העברה פעם בחודש.</span></span></div>
+        <div class="list"><div><span></span><span class="grow">חשבון ••• 4411<br><span class="micro muted">מנוהל אצל ספק הסליקה. העברה פעם בחודש.</span></span></div>
         <div><span>%</span><span class="grow">עמלה 10% מכל מכירה · עמלות כרטיס על העסק</span></div></div></section>`);
     K.wireBack('biz');
     K.on('[data-p] input', 'change', async (e) => {
@@ -147,10 +147,10 @@
       await A().updateProduct(b.id, card.dataset.p, { [k]: v }); K.toast('עודכן ✓ כבר באוויר');
     });
     K.on('[data-del]', 'click', async (e) => { if (await K.confirm('להוריד את המוצר?', 'מתנות שכבר נקנו נשארות בתוקף.', 'להוריד')) { await A().updateProduct(b.id, e.currentTarget.dataset.del, null); K.routeNow(); } });
-    K.on('#addp', 'click', async () => { const s = A().BIZ_TYPES[b.type].suggest.find((x) => !b.products.some((p) => p.name === x[1])) || ['🎁', 'מוצר חדש', '', 20]; await A().updateProduct(b.id, 'new', { emoji: s[0], name: s[1], includes: s[2], price: s[3] }); K.routeNow(); });
+    K.on('#addp', 'click', async () => { const s = A().BIZ_TYPES[b.type].suggest.find((x) => !b.products.some((p) => p.name === x[1])) || ['', 'מוצר חדש', '', 20]; await A().updateProduct(b.id, 'new', { emoji: s[0], name: s[1], includes: s[2], price: s[3] }); K.routeNow(); });
     K.on('[data-b]', 'change', async (e) => { await A().updateBusiness(b.id, { [e.target.dataset.b]: e.target.value.trim() }); K.toast('נשמר ✓'); });
     K.on('#pin', 'click', async () => { const pin = String(1000 + Math.floor(Math.random() * 9000)); await A().updateBusiness(b.id, { pin }); K.toast(`הקוד החדש: ${pin}`); K.routeNow(); });
-    K.on('#pause', 'click', async (e) => { const v = e.currentTarget.getAttribute('aria-checked') !== 'true'; await A().updateBusiness(b.id, { paused: v }); K.toast(v ? 'העסק מושהה ⏸' : 'חזרתם לפעול ▶'); K.routeNow(); });
+    K.on('#pause', 'click', async (e) => { const v = e.currentTarget.getAttribute('aria-checked') !== 'true'; await A().updateBusiness(b.id, { paused: v }); K.toast(v ? 'העסק מושהה ' : 'חזרתם לפעול ▶'); K.routeNow(); });
   }
 
   const stickerHTML = (b) => `<div class="sticker-print">
@@ -162,7 +162,7 @@
     const b = A().business(K.state.bizId);
     K.render(`${K.header('מדבקת QR')}
       ${stickerHTML(b)}
-      <button class="btn" onclick="window.print()">להדפיס 🖨</button>
+      <button class="btn" onclick="window.print()">להדפיס</button>
       <a class="btn md white" href="#/c/${b.slug}">לנסות: מה הלקוח רואה ›</a>
       <p class="micro muted center" style="margin:0">מדביקים ליד הקופה או על השולחנות.</p>`);
     K.wireBack('biz');
@@ -175,8 +175,8 @@
         <div><span><b>בודקים מה כלול</b><br><span class="small">כתוב על המסך, למשל "${b.products[0] ? esc(b.products[0].includes) : 'קפה בגודל רגיל'}".</span></span></div>
         <div><span><b>מקלידים את קוד העסק בטלפון של הלקוח</b><br><span class="small">4 ספרות. הקוד אצל המנהל.</span></span></div>
         <div><span><b>מופיע "מומש ✓" ומגישים</b><br><span class="small">זהו. הכסף כבר שולם, ומגיע אליכם בהעברה החודשית.</span></span></div>
-      </div>
-      <div class="card lav small">❓ קוד לא עובד? מתנה שפג תוקפה? כותבים לנו בוואטסאפ ועונים מהר.</div>`);
+</div>
+      <div class="card lav small"> קוד לא עובד? מתנה שפג תוקפה? כותבים לנו בוואטסאפ ועונים מהר.</div>`);
     K.wireBack('biz');
   }
 
@@ -191,7 +191,7 @@
         ${!b.approved ? `<button class="btn md" data-ok="${b.id}" style="width:auto">לאשר</button>` : b.paused ? '<span class="pill lav">מושהה</span>' : `<a class="pill lime" href="#/biz?id=${b.id}" style="text-decoration:none">פעיל ›</a>`}</div>`).join('')}</div>
       <p class="micro muted" style="margin:0">כל עסק מאושר ידנית. בהדגמה הכול נשמר רק בטלפון הזה.</p>`);
     K.wireBack('profile');
-    K.on('[data-ok]', 'click', async (e) => { await A().approveBusiness(e.currentTarget.dataset.ok); K.toast('העסק באוויר 🎉'); K.routeNow(); });
+    K.on('[data-ok]', 'click', async (e) => { await A().approveBusiness(e.currentTarget.dataset.ok); K.toast('העסק באוויר'); K.routeNow(); });
   });
 
   function wizard() {
@@ -206,7 +206,7 @@
       <label class="field">כתובת<input class="input" data-w="address" value="${esc(w.address)}"></label>
       <label class="field">שעות פתיחה<input class="input" data-w="hours" value="${esc(w.hours)}" placeholder="א׳–ה׳ 8:00–20:00"></label>
       <label class="field">טלפון<input class="input" data-w="phone" value="${esc(w.phone)}" inputmode="tel"></label>
-      <div class="field">לוגו<button class="btn md white" type="button" id="logo">📷 לצלם או להעלות</button></div>`;
+      <div class="field">לוגו<button class="btn md white" type="button" id="logo"> לצלם או להעלות</button></div>`;
     if (w.step === 2) body = `
       <p class="small" style="margin:0">עד 3 מוצרים. הצעות לפי ${T[w.type].name}:</p>
       ${w.products.map((p, i) => `<div class="card col ${p.on ? '' : 'flat'}" style="${p.on ? '' : 'opacity:.6'}">
@@ -216,22 +216,22 @@
     if (w.step === 3) body = `
       <label class="field">ח.פ / עוסק מורשה<input class="input" data-w="taxId" value="${esc(w.taxId)}" inputmode="numeric"></label>
       <label class="field">חשבון בנק להעברות<input class="input" data-w="bank" value="${esc(w.bank)}" placeholder="בנק · סניף · חשבון"></label>
-      <div class="note">🔒 בגרסה האמיתית הפרטים האלה נמסרים ישירות לספק הסליקה, לא נשמרים אצלנו.</div>`;
+      <div class="note"> בגרסה האמיתית הפרטים האלה נמסרים ישירות לספק הסליקה, לא נשמרים אצלנו.</div>`;
     if (w.step === 4) body = `
       <div class="list">
         <div><span>%</span><span class="grow">עמלה 10% מכל מכירה. <b>חודש ראשון בלי עמלה.</b></span></div>
-        <div><span>💳</span><span class="grow">הלקוח משלם בדיוק את המחיר של העסק. עמלות הכרטיס על העסק.</span></div>
-        <div><span>💰</span><span class="grow">הכסף של העסק מרגע המכירה, אחרי 24 שעות לביטול. העברה פעם בחודש.</span></div>
-        <div><span>↩️</span><span class="grow">אם העסק נסגר או לא מכבד מתנה, הלקוח מקבל החזר מלא.</span></div>
-        <div><span>📍</span><span class="grow">איסוף מהמקום בלבד. בלי משלוחים.</span></div>
-      </div>
+        <div><span></span><span class="grow">הלקוח משלם בדיוק את המחיר של העסק. עמלות הכרטיס על העסק.</span></div>
+        <div><span></span><span class="grow">הכסף של העסק מרגע המכירה, אחרי 24 שעות לביטול. העברה פעם בחודש.</span></div>
+        <div><span>↩</span><span class="grow">אם העסק נסגר או לא מכבד מתנה, הלקוח מקבל החזר מלא.</span></div>
+        <div><span></span><span class="grow">איסוף מהמקום בלבד. בלי משלוחים.</span></div>
+</div>
       <label class="check"><input type="checkbox" id="terms" ${w.terms ? 'checked' : ''}><span>בעל העסק קרא ומסכים לתנאים</span></label>`;
     if (w.step === 5) {
       const preview = { slug: 'new', emoji: T[w.type].emoji, products: w.products.filter((p) => p.on) };
       body = `
         <div class="card lime col center"><span class="small">קוד העסק</span><b class="code">${w.pin || (w.pin = String(1000 + Math.floor(Math.random() * 9000)))}</b><span class="micro">לרשום למנהל. אפשר להחליף בהגדרות.</span></div>
         ${stickerHTML(preview)}
-        <div class="list"><div><span>⏱</span><span class="grow">מדריך של דקה לצוות</span><span class="pill lime">✓</span></div><div><span>🏷</span><span class="grow">מדבקת QR להדפסה</span><span class="pill lime">✓</span></div></div>`;
+        <div class="list"><div><span></span><span class="grow">מדריך של דקה לצוות</span><span class="pill lime">✓</span></div><div><span></span><span class="grow">מדבקת QR להדפסה</span><span class="pill lime">✓</span></div></div>`;
     }
     const nextOk = w.step === 1 ? w.name.trim() && w.address.trim() : w.step === 2 ? w.products.some((p) => p.on) : w.step === 4 ? w.terms : true;
     K.render(`
@@ -239,9 +239,9 @@
       <div class="tabs">${steps.map((s, i) => `<span class="tab" aria-selected="${w.step === i + 1}">${i + 1}. ${s}</span>`).join('')}</div>
       ${body}
       <div class="stack-bottom">
-        <button class="btn lime" id="next" ${nextOk ? '' : 'disabled'}>${w.step === 5 ? 'לאשר ולהעלות לאוויר 🎉' : 'הבא'}</button>
+        <button class="btn lime" id="next" ${nextOk ? '' : 'disabled'}>${w.step === 5 ? 'לאשר ולהעלות לאוויר ' : 'הבא'}</button>
         ${w.step > 1 ? '<button class="btn ghost" id="prev">חזרה</button>' : ''}
-      </div>`);
+</div>`);
     K.wireBack('admin');
     const recheck = () => { const ok = w.step === 1 ? w.name.trim() && w.address.trim() : w.step === 4 ? w.terms : true; document.getElementById('next').disabled = !ok; };
     K.on('[data-w]', 'input', (e) => { w[e.target.dataset.w] = e.target.value; recheck(); });
@@ -260,7 +260,7 @@
       const b = await A().addBusiness({ name: w.name.trim(), type: w.type, address: w.address.trim(), hours: w.hours.trim() || 'לפי שעות הפתיחה', phone: w.phone, pin: w.pin, slug: 'b' + Date.now().toString(36),
         products: w.products.filter((p) => p.on).map((p, i) => ({ id: 'p-' + Date.now().toString(36) + i, emoji: p.emoji, name: p.name, includes: p.includes, price: p.price })) });
       await A().approveBusiness(b.id);
-      K.state.wiz = null; K.toast(`${b.name} באוויר 🎉`); K.go('biz?id=' + b.id);
+      K.state.wiz = null; K.toast(`${b.name} באוויר`); K.go('biz?id=' + b.id);
     });
   }
 })();

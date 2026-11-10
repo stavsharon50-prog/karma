@@ -23,25 +23,25 @@
       <div class="col center" style="gap:6px;margin-top:8px">${K.logo('xl')}<p class="h2" style="margin:6px 0 0">הכול חוזר.</p></div>
       <div class="col" style="gap:14px;margin:6px 0">
         <div class="card peach wcard" style="transform:rotate(1.5deg)">
-          <div class="head">${K.av({ name: 'מאיה', color: 'pink' })}<div class="body"><div class="k">You've been KARMAd 😈</div><b>מאיה פתחה איתך ביף</b><div class="small">על: אכלת לי את הצ׳יפס 🍟</div></div>${K.chilis(2)}</div>
-        </div>
+          <div class="head">${K.av({ name: 'מאיה', color: 'pink' })}<div class="body"><div class="k">You've been KARMAd 😈</div><b>מאיה פתחה איתך ביף</b><div class="small">על: אכלת לי את הצ׳יפס</div></div>${K.chilis(2)}</div>
+</div>
         <div class="card pink wcard" style="transform:rotate(-1.5deg)">
-          <div class="head">${K.av({ name: 'נוי', color: 'lime' })}<div class="body"><div class="k">You've been KARMAd 😇</div><b>נוי שלחה לך גוד קארמה</b><div class="small">סתם כי התגעגעתי 🫶 · ומתנה: קפה</div></div><span style="font-size:26px">☕</span></div>
-        </div>
-      </div>
+          <div class="head">${K.av({ name: 'נוי', color: 'lime' })}<div class="body"><div class="k">You've been KARMAd 😇</div><b>נוי שלחה לך גוד קארמה</b><div class="small">סתם כי התגעגעתי · ומתנה: קפה</div></div><span style="font-size:26px"></span></div>
+</div>
+</div>
       <div class="col" style="gap:6px">
         <div class="def"><span>😈</span><span><b>ביף</b> · כשמישהו חייב לך משהו קטן. הוא סוגר בסליחה או בקפה.</span></div>
         <div class="def"><span>😇</span><span><b>גוד קארמה</b> · כשבא לך לפרגן למישהו. עם מתנה קטנה או בלי.</span></div>
-      </div>
+</div>
       <div class="stack-bottom">
         ${googleBtn()}
-        <p class="small center" style="margin:0">🔒 רק חברים שאישרת יכולים לשלוח לך ביף או גוד קארמה.</p>
+        <p class="small center" style="margin:0"> רק חברים שאישרת יכולים לשלוח לך ביף או גוד קארמה.</p>
         ${fine}
         <details class="micro muted center"><summary>הדגמה: איך זה נראה כשמזמינים אותך?</summary>
           <div class="row" style="justify-content:center;margin-top:8px;flex-wrap:wrap">
             <button class="chip" data-demo="beef">עם ביף 😈</button><button class="chip" data-demo="karma">עם גוד קארמה 😇</button><button class="chip" data-demo="plain">הזמנה רגילה</button><button class="chip" data-demo="fresh">משתמש חדש לגמרי</button>
-          </div></details>
-      </div>`);
+</div></details>
+</div>`);
     wireLogin();
     K.on('[data-demo]', 'click', async (e) => {
       const d = e.currentTarget.dataset.demo;
@@ -58,14 +58,14 @@
           <div class="row" style="justify-content:center">${K.av(f, 'lg')}</div>
           <h1 class="center">ל${esc(f.name)} יש ביף איתך</h1>
           <div class="sticker"><span class="big-reason redacted" aria-hidden="true">${esc(inv.beef.reason)}</span>${K.chilis(inv.beef.spice)}</div>
-          <p class="center h3" style="margin:0">רוצה לדעת מה עשית? 👀</p></div>`
+          <p class="center h3" style="margin:0">רוצה לדעת מה עשית?</p></div>`
       : inv.kind === 'karma'
         ? `<div class="card pink hero">
           <span class="kicker">You've been KARMAd 😇</span>
           <div class="row" style="justify-content:center">${K.av(f, 'lg')}</div>
           <h1 class="center">ל${esc(f.name)} יש משהו טוב בשבילך</h1>
           <div class="sticker"><span class="big-reason redacted" aria-hidden="true">${esc(inv.karma.message)}</span></div>
-          <p class="center h3" style="margin:0">רוצה לראות? 💌</p></div>`
+          <p class="center h3" style="margin:0">רוצה לראות?</p></div>`
         : `<div class="card lime hero">
           <div class="row" style="justify-content:center">${K.av(f, 'lg')}</div>
           <h1 class="center">${esc(f.name)} ${K.G(f.p, 'מזמינה', 'מזמין')} אותך ל-KARMA.</h1>
@@ -88,11 +88,11 @@
         ${K.av(f, 'xl')}
         <h1>${esc(f.name)} ${K.G(f.p, 'רוצה להיות חברה', 'רוצה להיות חבר')} שלך ב-KARMA.</h1>
         <p class="muted" style="margin:0">חברים יכולים לשלוח אחד לשני ביפים, גוד קארמה והתערבויות.</p>
-      </div>
+</div>
       <div class="stack-bottom">
         <button class="btn lime" id="ok">${inv.kind === 'plain' ? 'לאשר' : 'לאשר ולראות'}</button>
         <button class="btn ghost" id="no">לא עכשיו</button>
-      </div>`);
+</div>`);
     K.on('#ok', 'click', async () => {
       await K.api.approveInvite();
       if (inv.kind === 'beef') return K.go('beef/b0?first=1');
@@ -109,8 +109,8 @@
       <div class="col" style="gap:12px">
         <div class="card peach row" style="align-items:flex-start"><span style="font-size:34px">😈</span><div><h2>ביף</h2><p style="margin:2px 0 0">מישהו חייב לך? פותחים ביף. הוא סוגר בהתנצלות, בשיר, או בקפה אמיתי.</p></div></div>
         <div class="card pink row" style="align-items:flex-start"><span style="font-size:34px">😇</span><div><h2>גוד קארמה</h2><p style="margin:2px 0 0">מגיע למישהו? תודה, מזל טוב, סתם כי התגעגעת. עם מתנה או בלי.</p></div></div>
-        <div class="card lime row" style="align-items:flex-start"><span style="font-size:34px">🎁</span><div><h2>מתנות אמיתיות</h2><p style="margin:2px 0 0">קפה, גלידה ופרחים מעסקים קטנים בשכונה. אוספים במקום עם קוד.</p></div></div>
-      </div>
+        <div class="card lime row" style="align-items:flex-start"><span style="font-size:34px"></span><div><h2>מתנות אמיתיות</h2><p style="margin:2px 0 0">קפה, גלידה ופרחים מעסקים קטנים בשכונה. אוספים במקום עם קוד.</p></div></div>
+</div>
       <div class="stack-bottom"><button class="btn" id="go">יאללה</button></div>`);
     K.on('#go', 'click', () => {
       if (inv && inv.approved) { K.api.setOnboarded(); K.go(''); }
@@ -124,8 +124,8 @@
       <div class="col" style="gap:10px">
         <button class="opt" data-k="beef" style="background:#FFEDE6"><span class="em">😈</span><span style="flex:1"><span class="t">לפתוח ביף על מישהו</span></span></button>
         <button class="opt" data-k="karma" style="background:var(--pink-soft)"><span class="em">😇</span><span style="flex:1"><span class="t">לשלוח גוד קארמה</span></span></button>
-        <button class="opt" data-k="plain"><span class="em">💬</span><span style="flex:1"><span class="t">רק להזמין</span></span></button>
-      </div>
+        <button class="opt" data-k="plain"><span class="em"></span><span style="flex:1"><span class="t">רק להזמין</span></span></button>
+</div>
       <div class="stack-bottom"><button class="btn ghost" id="later">אחר כך</button></div>`);
     K.on('[data-k]', 'click', (e) => {
       const k = e.currentTarget.dataset.k; K.api.setOnboarded();
