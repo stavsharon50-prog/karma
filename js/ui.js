@@ -13,7 +13,8 @@
     const [c, t] = map[b.status] || ['', b.status];
     return `<span class="pill ${c}">${t}</span>`;
   };
-  K.coolLeft = (b) => {
+  K.coolLeft = () => null; // cooling is out of the launch scope
+  K._coolLeftOld = (b) => {
     if (b.spice !== 1 || b.status !== 'open') return null;
     const left = Math.ceil((new Date(b.createdAt).getTime() + 7 * 864e5 - Date.now()) / 864e5);
     return left <= 0 ? 'היום' : left === 1 ? 'מחר' : `בעוד ${left} ימים`;

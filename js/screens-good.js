@@ -34,7 +34,6 @@
           <div class="card pink wcard"><div class="head">${K.av(A().me())}<div class="body"><div class="k">You've been KARMAd 😇</div><b>${esc(A().me().name)}: ${occ.name} ${occ.emoji}</b>${st.msg ? `<div class="small">${esc(st.msg)}</div>` : ''}</div>${pick ? `<span style="font-size:26px">${pick.emoji}</span>` : ''}</div></div></section>` : ''}
         <div class="stack-bottom">
           <button class="btn pink" id="send" ${ready ? '' : 'disabled'}>${!ready ? 'לשלוח 😇' : pick ? `לשלם ${K.money(pick.price)} ולשלוח` : f.invited ? `${K.ICON.wa}<span>לשלוח בוואטסאפ 😇</span>` : 'לשלוח 😇'}</button>
-          ${pick ? `<p class="micro muted center" style="margin:0">איסוף מ${esc(pick.biz.name)} עם קוד · בתוקף 30 יום · אפשר לבטל תוך 24 שעות</p>` : ''}
         </div>`);
       K.wireBack('good');
       K.wirePicker((fid) => { st.to = fid; draw(); });
@@ -121,14 +120,13 @@
         <span class="meta">${tab === 'got' ? 'מ' : 'ל'}${esc(k.friend.name)} · ${sched ? '⏰ ' + K.whenFuture(k.deliverAt) : K.timeAgo(k.deliverAt)}</span></span>${k.gift ? `<span style="font-size:22px">${k.gift.product.emoji}</span>` : ''}</a>`;
     };
     K.render(`
-      ${K.homeHeader()}
-      <h1>גוד קארמה</h1>
-      <div class="grid2"><div class="kpi" style="background:var(--pink)"><b>${gotM}</b><span style="color:var(--ink)">קיבלת החודש</span></div><div class="kpi"><b>${sentM}</b><span>שלחת החודש</span></div></div>
-      ${soon.length ? `<section class="col"><h2>🎂 בקרוב</h2><div class="list">${soon.map(({ f, d }) => `<a href="#/new-karma?to=${f.id}&occ=bday">${K.av(f, 'sm')}<span class="grow"><b>${esc(f.name)}</b> · ${K.bdayText(f.birthday)}</span><span class="pill ${d <= 7 ? 'pink' : ''}">${d === 0 ? 'היום!' : d === 1 ? 'מחר' : `עוד ${d} ימים`}</span></a>`).join('')}</div></section>`
+      ${K.header('גוד קארמה 😇')}
+            ${soon.length ? `<section class="col"><h2>🎂 בקרוב</h2><div class="list">${soon.map(({ f, d }) => `<a href="#/new-karma?to=${f.id}&occ=bday">${K.av(f, 'sm')}<span class="grow"><b>${esc(f.name)}</b> · ${K.bdayText(f.birthday)}</span><span class="pill ${d <= 7 ? 'pink' : ''}">${d === 0 ? 'היום!' : d === 1 ? 'מחר' : `עוד ${d} ימים`}</span></a>`).join('')}</div></section>`
         : `<a class="card lav row" href="#/new-karma?occ=thanks" style="text-decoration:none"><span style="font-size:28px">🙏</span><b style="flex:1">מתי בפעם האחרונה אמרת תודה למישהו?</b>${K.ICON.fwd}</a>`}
       <a class="btn pink" href="#/new-karma">לשלוח גוד קארמה 😇</a>
       <div class="seg"><button data-t="got" aria-pressed="${tab === 'got'}">קיבלתי</button><button data-t="sent" aria-pressed="${tab === 'sent'}">שלחתי</button></div>
       <div class="col">${list.map(row).join('') || `<p class="muted center">${tab === 'got' ? 'עוד לא קיבלת. זה יגיע 😇' : 'עוד לא שלחת. מישהו בטוח מחכה.'}</p>`}</div>`, { nav: 'good' });
+    K.wireBack('');
     K.on('[data-t]', 'click', (e) => K.go('good?t=' + e.currentTarget.dataset.t));
   });
 
@@ -146,7 +144,7 @@
         ${soon.length ? `<section class="col"><h2>⏳ עומד לפוג</h2>${soon.map(K.giftCard).join('')}</section>` : ''}
         ${rest.length ? `<section class="col">${soon.length ? '<h2>עוד מחכות לך</h2>' : ''}${rest.map(K.giftCard).join('')}</section>` : ''}
         ${!w.active.length ? `<div class="card cream center col" style="padding:28px"><div style="font-size:44px">🎁</div><h2>עוד אין כאן מתנות</h2><p class="muted" style="margin:0">אבל הכול חוזר 😉</p></div>` : ''}
-        <p class="micro muted center" style="margin:0">מראים את הקוד בקופה. הצוות מקליד את הקוד של העסק, וזהו.</p>`
+`
         : `<div class="col">${w.used.map(K.giftCard).join('') || '<p class="muted center">עוד לא מימשת כלום.</p>'}</div>`}`, { nav: 'wallet' });
     K.on('[data-t]', 'click', (e) => K.go('wallet?tab=' + e.currentTarget.dataset.t));
   });

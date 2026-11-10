@@ -138,9 +138,7 @@
     const it = (k, href, icon, label) => `<a class="bn-item" href="${href}" ${active === k ? 'aria-current="page"' : ''}>${K.ICON[icon]}<span>${label}</span></a>`;
     return `<nav class="bottomnav" aria-label="ניווט ראשי">
       ${it('home', '#/', 'home', 'בית')}
-      ${it('accounts', '#/accounts', 'accounts', 'חשבונות')}
       <button class="bn-plus" data-plus aria-label="מה שולחים?">${K.ICON.plus}</button>
-      ${it('good', '#/good', 'heart', 'גוד קארמה')}
       ${it('wallet', '#/wallet', 'gift', 'המתנות שלי')}
     </nav>`;
   };
@@ -181,7 +179,7 @@
       <div class="col" style="gap:8px">
         <button class="opt" data-v="new-beef" style="background:var(--peach)"><span class="em">😈</span><span style="flex:1"><span class="t">ביף</span><br><span class="s">מישהו אכל לך את הצ׳יפס?</span></span></button>
         <button class="opt" data-v="new-karma" style="background:var(--pink)"><span class="em">😇</span><span style="flex:1"><span class="t">גוד קארמה</span><br><span class="s" style="color:var(--ink)">תודה, מזל טוב, סתם כי התגעגעת</span></span></button>
-        <button class="opt" data-v="new-bet" style="background:var(--lime)"><span class="em">🥊</span><span style="flex:1"><span class="t">התערבות</span><br><span class="s" style="color:var(--ink)">על הכבוד, או על קפה</span></span></button>
+        ${K.api.BETS ? '' : '<!--'}<button class="opt" data-v="new-bet" style="background:var(--lime)"><span class="em">🥊</span><span style="flex:1"><span class="t">התערבות</span><br><span class="s" style="color:var(--ink)">על הכבוד, או על קפה</span></span></button>${K.api.BETS ? '' : '-->'}
       </div><button class="btn ghost" data-v="">ביטול</button>`, 'מה שולחים?');
     if (v) { K.api.log('create_sheet', { pick: v }); K.go(v); }
   });

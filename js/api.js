@@ -10,10 +10,10 @@
   const code = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 31)]).join('');
   const mmdd = (days) => { const d = new Date(Date.now() + days * D); return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
+  // Launch scope: bets come later; one free gesture.
+  const BETS = false;
   const GESTURES = {
-    apology: { id: 'apology', emoji: '📜', name: 'התנצלות רשמית', desc: 'בכתב, עם חתימה' },
-    story: { id: 'story', emoji: '📸', name: 'סטורי פרגון', desc: '24 שעות של כבוד' },
-    song: { id: 'song', emoji: '🎤', name: 'שיר בהודעה קולית', desc: 'זיופים חובה' },
+    apology: { id: 'apology', emoji: '🙏', name: 'סליחה', desc: 'בלי מתנה. צריך אישור' },
   };
   const PRESETS = ['אכלת לי את הצ׳יפס 🍟', 'איחרת. שוב. ⏰', 'השארת אותי על וי כחול 💬', 'לקחת בגד ולא החזרת 👕', 'ספוילרת לי סדרה 📺', 'ביטלת ברגע האחרון 🙃', 'שכחת להחזיר כסף 💸', 'לא אמרת לי מזל טוב 🎂'];
   const OCCASIONS = [
@@ -67,7 +67,7 @@
       b3: { id: 'b3', from: 'me', to: 'f-noy', reason: 'ספוילרת לי את הפרק האחרון 📺', spice: 3, status: 'open', createdAt: ago(26 * H) },
       b4: { id: 'b4', from: 'me', to: 'f-maya', reason: 'ביטלת ברגע האחרון 🙃', spice: 1, status: 'pending', gesture: 'apology', gestureAt: ago(40 * 60e3), createdAt: ago(30 * H) },
       b5: { id: 'b5', from: 'me', to: 'f-itai', reason: 'לקחת לי את המטען ולא החזרת 🔌', spice: 2, status: 'settled', closedBy: 'gift', giftId: 'g1', createdAt: ago(3 * D + 40 * 60e3), closedAt: ago(3 * D) },
-      b6: { id: 'b6', from: 'f-noy', to: 'me', reason: 'איחרת. שוב. ⏰', spice: 1, status: 'settled', closedBy: 'gesture', gesture: 'song', createdAt: ago(15 * D), closedAt: ago(14 * D) },
+      b6: { id: 'b6', from: 'f-noy', to: 'me', reason: 'איחרת. שוב. ⏰', spice: 1, status: 'settled', closedBy: 'gesture', gesture: 'apology', createdAt: ago(15 * D), closedAt: ago(14 * D) },
       b7: { id: 'b7', from: 'f-dani', to: 'me', reason: 'שכחת להחזיר כסף 💸', spice: 2, status: 'settled', closedBy: 'gesture', gesture: 'apology', createdAt: ago(9 * D), closedAt: ago(9 * D - 2 * H) },
       b8: { id: 'b8', from: 'me', to: 'f-shira', reason: 'לא אמרת לי מזל טוב 🎂', spice: 1, status: 'released', closedBy: 'release', createdAt: ago(12 * D), closedAt: ago(11 * D) },
     };
@@ -92,17 +92,15 @@
     const n = (id, kind, title, body, link, at, read) => ({ id, kind, title, body, link, createdAt: at, read: !!read });
     const notifs = [
       n('n1', 'beef', "You've been KARMAd 😈", 'למאיה יש ביף איתך: אכלת לי את הצ׳יפס 🍟', 'beef/b1', ago(2 * H)),
-      n('n2', 'bet', 'איתי זרק לך כפפה 🥊', 'מי לוקחת את הדרבי בשבת? · על קפה ☕', 'bet/bt1', ago(1 * H)),
       n('n3', 'karma', "You've been KARMAd 😇", 'שירה שלחה לך גוד קארמה', 'karma/k4', ago(4 * H)),
-      n('n4', 'gesture', 'מאיה הציעה התנצלות רשמית 📜', 'על "ביטלת ברגע האחרון". סגרנו?', 'mine/b4', ago(40 * 60e3)),
+      n('n4', 'gesture', 'מאיה ביקשה סליחה 🙏', 'על "ביטלת ברגע האחרון". סגרנו?', 'mine/b4', ago(40 * 60e3)),
       n('n5', 'expiring', 'הגלידה מחכה לך 🍦', 'הגלידה של שלום תפוג בעוד 5 ימים', 'wallet', ago(26 * H), true),
-      n('n6', 'bet', 'הפסדת 😅', 'דניאל ניצח בהתערבות. מגיע לו קפה ☕', 'bet/bt3', ago(20 * H), true),
       n('n7', 'closed', 'תיק סגור ✓', 'איתי סגר את החשבון בקפה ☕', 'closed/b5', ago(3 * D), true),
     ];
     return {
-      v: 2, signedIn: false, onboarded: false, invite: null, tipSeen: false, bdayAsked: false,
-      me: { id: 'me', name: 'אור', email: 'or@gmail.com', color: 'pink', pronoun: null, birthday: null, likes: {}, notif: { digest: '18:00', quiet: true } },
-      friends, businesses, gifts, beefs, karma, bets, notifs, events: [], sales: synthSales(),
+      v: 3, signedIn: false, onboarded: false, invite: null, tipSeen: false, bdayAsked: false,
+      me: { id: 'me', name: 'אור', email: 'or@gmail.com', color: 'pink', joined: ago(200 * D), pronoun: null, birthday: null, likes: {}, notif: { digest: '18:00', quiet: true } },
+      friends, businesses, gifts: BETS ? gifts : (delete gifts.g5, gifts), beefs, karma, bets: BETS ? bets : {}, notifs, events: [], sales: synthSales(),
     };
   }
   // Fake sales history so the business dashboard has life in it.
@@ -150,8 +148,8 @@
     GESTURES, PRESETS, OCCASIONS, BET_CATS, BIZ_TYPES,
     async init() {
       try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
-      if (!S || S.v !== 2) { S = seed(); save(); }
-      coolDown(); save();
+      if (!S || S.v !== 3) { S = seed(); save(); }
+      save();
     },
     log(name, props) { if (!S) return; S.events.push({ name, props, at: Date.now() }); if (S.events.length > 300) S.events.splice(0, 100); save(); },
     signedIn: () => !!(S && S.signedIn),
@@ -159,6 +157,13 @@
     setOnboarded() { if (!S.onboarded) { S.onboarded = true; save(); } },
     tipSeen: () => S.tipSeen, setTipSeen() { S.tipSeen = true; save(); },
     bdayAsked: () => S.bdayAsked, setBdayAsked() { S.bdayAsked = true; save(); },
+    BETS,
+    canWrap: () => Date.now() - new Date(S.me.joined || 0) > 30 * D,
+    // Demo: a brand-new user with nobody yet.
+    async freshStart() {
+      Object.assign(S, { friends: {}, beefs: {}, karma: {}, gifts: {}, bets: {}, notifs: [], invite: null, tipSeen: true });
+      S.me.joined = new Date().toISOString(); changed();
+    },
     async signIn() { S.signedIn = true; api.log('signup', {}); save(); },
     async signOut() { S.signedIn = false; S.onboarded = false; save(); },
     async reset() { localStorage.removeItem(KEY); S = seed(); save(); },
@@ -304,8 +309,8 @@
             Object.assign(x, { status: 'settled', closedBy: 'gift', giftId: g.id, closedAt: new Date().toISOString() });
             notify('closed', 'תיק סגור ✓', `${f.name} סגר${f.p === 'f' ? 'ה' : ''} את החשבון. מחכה לך משהו 🎁`, 'closed/' + b.id);
           } else {
-            Object.assign(x, { status: 'pending', gesture: spice === 1 ? 'song' : 'apology', gestureAt: new Date().toISOString() });
-            notify('gesture', `${f.name} הציע${f.p === 'f' ? 'ה' : ''} ${GESTURES[x.gesture].name} ${GESTURES[x.gesture].emoji}`, `על "${reason}". סגרנו?`, 'mine/' + b.id);
+            Object.assign(x, { status: 'pending', gesture: 'apology', gestureAt: new Date().toISOString() });
+            notify('gesture', `${f.name} ${K.G(f.p, 'ביקשה', 'ביקש')} סליחה 🙏`, `על "${reason}". סגרנו?`, 'mine/' + b.id);
           }
         });
       }
@@ -329,10 +334,10 @@
         const x = S.beefs[id]; if (x.status !== 'pending') return;
         if (x.spice === 3) {
           Object.assign(x, { status: 'wantmore', wantMoreAt: new Date().toISOString() });
-          notify('wantmore', `${f.name} ${K.G(f.p, 'רוצה', 'רוצה')} יותר 😤`, `${GESTURES[gesture].name} לא מספיק${f.p === 'f' ? 'ה' : ''} ל${f.name}. אולי קפה?`, 'beef/' + id);
+          notify('wantmore', `${f.name} ${K.G(f.p, 'רוצה', 'רוצה')} יותר 😤`, `סליחה לא מספיקה ל${f.name}. אולי קפה?`, 'beef/' + id);
         } else {
           Object.assign(x, { status: 'settled', closedBy: 'gesture', closedAt: new Date().toISOString() });
-          notify('closed', 'סגרנו! 🤝', `${f.name} ${K.G(f.p, 'אישרה', 'אישר')} את ה${GESTURES[gesture].name}`, 'closed/' + id);
+          notify('closed', 'סגרנו! 🤝', `${f.name} ${K.G(f.p, 'סלחה', 'סלח')} 🙏`, 'closed/' + id);
         }
       });
       return decorate(b);

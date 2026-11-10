@@ -8,7 +8,8 @@
   async function afterLogin() {
     const inv = K.api.invite();
     if (inv && inv.kind) return K.go('approve');
-    K.go('intro');
+    if (K.state.fresh) { K.state.fresh = false; await K.api.freshStart(); }
+    K.go('start');
   }
 
   K.route('welcome', () => {
@@ -31,11 +32,15 @@
         ${fine}
         <details class="micro muted center"><summary>הדגמה: איך זה נראה כשמזמינים אותך?</summary>
           <div class="row" style="justify-content:center;margin-top:8px;flex-wrap:wrap">
-            <button class="chip" data-demo="beef">עם ביף 😈</button><button class="chip" data-demo="karma">עם גוד קארמה 😇</button><button class="chip" data-demo="plain">הזמנה רגילה</button>
+            <button class="chip" data-demo="beef">עם ביף 😈</button><button class="chip" data-demo="karma">עם גוד קארמה 😇</button><button class="chip" data-demo="plain">הזמנה רגילה</button><button class="chip" data-demo="fresh">משתמש חדש לגמרי</button>
           </div></details>
       </div>`);
     K.on('#g', 'click', async () => { if (await K.google()) afterLogin(); });
-    K.on('[data-demo]', 'click', (e) => { K.api.setInvite(e.currentTarget.dataset.demo); K.routes.welcome(); });
+    K.on('[data-demo]', 'click', async (e) => {
+      const d = e.currentTarget.dataset.demo;
+      if (d === 'fresh') { K.state.fresh = true; if (await K.google()) afterLogin(); return; }
+      K.api.setInvite(d); K.routes.welcome();
+    });
   });
 
   function invited(inv) {
@@ -85,9 +90,9 @@
       await K.api.approveInvite();
       if (inv.kind === 'beef') return K.go('beef/b0?first=1');
       if (inv.kind === 'karma') return K.go('karma/k0?first=1');
-      K.go('intro');
+      K.api.setOnboarded(); K.go('');
     });
-    K.on('#no', 'click', () => { K.api.clearInvite(); K.go('intro'); });
+    K.on('#no', 'click', () => { K.api.clearInvite(); K.go('start'); });
   });
 
   K.route('intro', () => {
@@ -108,11 +113,11 @@
 
   K.route('start', () => {
     K.render(`
-      <div class="col" style="gap:6px;margin-top:10px"><h1>עם מי מתחילים?</h1><p class="muted" style="margin:0">KARMA. כיף רק עם חברים. בוחרים איך להביא את הראשון.</p></div>
+      <div class="col" style="gap:6px;margin-top:10px"><h1>עם מי מתחילים?</h1></div>
       <div class="col" style="gap:10px">
-        <button class="opt" data-k="beef" style="background:var(--peach)"><span class="em">😈</span><span style="flex:1"><span class="t">לפתוח ביף על מישהו</span><br><span class="s">הוא יקבל הזמנה בוואטסאפ עם הביף</span></span></button>
-        <button class="opt" data-k="karma" style="background:var(--pink)"><span class="em">😇</span><span style="flex:1"><span class="t">לשלוח גוד קארמה</span><br><span class="s" style="color:var(--ink)">הדרך הכי נחמדה להזמין</span></span></button>
-        <button class="opt" data-k="plain"><span class="em">💬</span><span style="flex:1"><span class="t">רק להזמין</span><br><span class="s">הזמנה רגילה בוואטסאפ</span></span></button>
+        <button class="opt" data-k="beef" style="background:var(--peach)"><span class="em">😈</span><span style="flex:1"><span class="t">לפתוח ביף על מישהו</span></span></button>
+        <button class="opt" data-k="karma" style="background:var(--pink)"><span class="em">😇</span><span style="flex:1"><span class="t">לשלוח גוד קארמה</span></span></button>
+        <button class="opt" data-k="plain"><span class="em">💬</span><span style="flex:1"><span class="t">רק להזמין</span></span></button>
       </div>
       <div class="stack-bottom"><button class="btn ghost" id="later">אחר כך</button></div>`);
     K.on('[data-k]', 'click', (e) => {

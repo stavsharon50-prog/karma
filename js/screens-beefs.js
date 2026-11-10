@@ -6,35 +6,35 @@
 
   // ───────── home ─────────
   K.route('home', () => {
-    if (!A().onboarded()) { const inv = A().invite(); return K.go(inv && inv.approved ? 'intro' : 'intro'); }
+    if (!A().onboarded()) return K.go('start');
     const h = A().home();
     const me = A().me();
     const inv = A().invite();
-    const cards = h.waiting.map(waitCard).join('');
-    const nothing = !h.waiting.length && !h.mine.length;
-    const tip = !A().tipSeen() ? `<div class="note row between"><span>💡 הכפתור <b>➕</b> פותח ביף, גוד קארמה או התערבות.</span><button class="link micro" id="tip">הבנתי</button></div>` : '';
-    const plainSuggest = inv && inv.kind === 'plain' && inv.approved && !A().beefs().mine.some((b) => b.to === inv.from)
+    const bf = A().beefs(), kl = A().karmaList();
+    const openCount = bf.onMe.length + bf.mine.length;
+    const nothing = !h.waiting.length && !openCount && !kl.got.length && !kl.sent.length;
+    const tip = !A().tipSeen() && !nothing ? `<div class="note row between"><span>💡 <b>➕</b> פותח ביף או שולח גוד קארמה</span><button class="link micro" id="tip">הבנתי</button></div>` : '';
+    const plainSuggest = inv && inv.kind === 'plain' && inv.approved && !bf.mine.some((b) => b.to === inv.from)
       ? `<a class="card peach row" href="#/new-beef?to=${inv.from}" style="text-decoration:none"><span style="font-size:28px">😈</span><b style="flex:1">לפתוח ביף ראשון על ${esc(inv.fromP.name)}?</b>${K.ICON.fwd}</a>` : '';
     const rem = h.reminder;
     const reminder = !rem ? '' : rem.type === 'bday'
-      ? `<a class="card lav row" href="#/new-karma?to=${rem.friend.id}&occ=bday" style="text-decoration:none"><span style="font-size:28px">🎂</span><span style="flex:1"><b>ל${esc(rem.friend.name)} יום הולדת ${rem.days === 0 ? 'היום!' : rem.days === 1 ? 'מחר' : `בעוד ${rem.days} ימים`}</b><br><span class="small">לשלוח גוד קארמה שתגיע בחצות?</span></span>${K.ICON.fwd}</a>`
-      : `<a class="card lav row" href="#/redeem/${rem.gift.id}" style="text-decoration:none"><span style="font-size:28px">${rem.gift.product.emoji}</span><span style="flex:1"><b>ה${esc(rem.gift.product.name)} מחכה לך</b><br><span class="small">${esc(rem.gift.product.biz.name)} · ${K.validity(rem.gift)}</span></span>${K.ICON.fwd}</a>`;
+      ? `<a class="card lav row" href="#/new-karma?to=${rem.friend.id}&occ=bday" style="text-decoration:none"><span style="font-size:28px">🎂</span><b style="flex:1">ל${esc(rem.friend.name)} יום הולדת ${rem.days === 0 ? 'היום!' : rem.days === 1 ? 'מחר' : `בעוד ${rem.days} ימים`}</b>${K.ICON.fwd}</a>`
+      : `<a class="card lav row" href="#/redeem/${rem.gift.id}" style="text-decoration:none"><span style="font-size:28px">${rem.gift.product.emoji}</span><b style="flex:1">ה${esc(rem.gift.product.name)} מחכה לך</b>${K.validity(rem.gift)}</a>`;
     K.render(`
       ${K.homeHeader()}
-      <div class="col" style="gap:8px">
-        <h1>היי ${esc(me.name)} 👋</h1>
-        <div class="stat-line"><span class="pill">השבוע:</span><span class="pill peach">😈 ${h.week.beefs} ביפים</span><span class="pill pink">😇 ${h.week.good} גוד קארמה</span>${h.week.gifts ? `<a class="pill lime" href="#/wallet" style="text-decoration:none">🎁 ${h.week.gifts} למימוש</a>` : ''}</div>
-      </div>
+      <h1>היי ${esc(me.name)} 👋</h1>
       ${tip}${plainSuggest}
-      ${nothing ? `<div class="card cream center col" style="padding:28px 18px"><div style="font-size:44px">😈</div><h2>עוד אין כאן אף אחד</h2><p class="muted" style="margin:0">ביף אחד בוואטסאפ, וזה מתחיל.</p><button class="btn md" id="inv">להזמין חבר</button></div>` : ''}
-      ${h.waiting.length ? `<section class="col"><div class="sec"><h2>מחכה לך</h2><span class="pill dark">${h.waiting.length}</span></div>${cards}</section>`
-        : !nothing ? `<div class="card lime row"><span style="font-size:28px">✨</span><div><b>הכול סגור. קארמה נקייה.</b><br><span class="small">אין שום דבר שמחכה לך.</span></div></div>` : ''}
+      ${nothing ? `<div class="card cream center col" style="padding:28px 18px"><div style="font-size:44px">😈😇</div><h2>עוד אין כאן אף אחד</h2><p class="muted" style="margin:0">ביף אחד בוואטסאפ, וזה מתחיל.</p>
+          <a class="btn md" href="#/new-beef">לפתוח ביף 😈</a><a class="btn md pink" href="#/new-karma">לשלוח גוד קארמה 😇</a></div>` : ''}
+      ${h.waiting.length ? `<section class="col"><h2>מחכה לך</h2>${h.waiting.map(waitCard).join('')}</section>`
+        : !nothing ? `<div class="card lime row"><span style="font-size:28px">✨</span><b>הכול סגור. קארמה נקייה.</b></div>` : ''}
       ${reminder}
-      ${h.mine.length ? `<section class="col"><div class="sec"><h2>הביפים שלי</h2><a class="small" href="#/accounts">לכל הביפים ›</a></div>
-        ${h.mine.slice(0, 3).map((b) => K.beefRow(b, { cool: true })).join('')}</section>` : ''}
+      ${nothing ? '' : `<div class="grid2">
+        <a class="card peach col" href="#/accounts" style="text-decoration:none;gap:2px"><span style="font-size:26px">😈</span><b>ביפים</b><span class="small">${openCount ? `${openCount} פתוחים` : 'אין פתוחים'}</span></a>
+        <a class="card pink col" href="#/good" style="text-decoration:none;gap:2px"><span style="font-size:26px">😇</span><b>גוד קארמה</b><span class="small" style="color:var(--ink)">קיבלת ${kl.got.length} · שלחת ${kl.sent.length}</span></a>
+      </div>`}
     `, { nav: 'home' });
     K.on('#tip', 'click', () => { A().setTipSeen(); K.routeNow(); });
-    K.on('#inv', 'click', () => K.shareWA(K.inviteText('plain')));
     wireWaiting();
   });
 
@@ -46,12 +46,12 @@
         <a href="#/beef/${x.id}" style="text-decoration:none;color:inherit">${head("You've been KARMAd 😈", `${esc(f.name)}: ${esc(x.reason)}`, K.chilis(x.spice))}</a>
         <div class="acts"><a class="btn md" href="#/settle/${x.id}">לסגור חשבון</a><a class="btn md white" href="#/beef/${x.id}">לראות</a></div></div>`;
       case 'gesture': return `<div class="card lime wcard">
-        ${head('', `${esc(f.name)} ${K.gv(f, 'הציעה', 'הציע')} ${GEST()[x.gesture].name} ${GEST()[x.gesture].emoji}`)}
+        ${head('', `${esc(f.name)} ${K.gv(f, 'ביקשה', 'ביקש')} סליחה 🙏`)}
         <div class="small">על "${esc(x.reason)}"</div>
         <div class="acts"><button class="btn md white" data-gok="${x.id}">סגרנו! 🤝</button><button class="btn md white" data-gno="${x.id}">זה לא מספיק 😤</button></div></div>`;
       case 'wantmore': return `<div class="card peach wcard">
         ${head('', `${esc(f.name)} ${K.gv(f, 'רוצה', 'רוצה')} יותר 😤`)}
-        <div class="small">${GEST()[x.gesture].name} לא הספיק על "${esc(x.reason)}"</div>
+        <div class="small">סליחה לא הספיקה על "${esc(x.reason)}"</div>
         <div class="acts"><a class="btn md" href="#/settle/${x.id}?coffee=1">לשלוח קפה ☕</a><a class="btn md white" href="#/settle/${x.id}">משהו אחר</a></div></div>`;
       case 'challenge': return `<div class="card lime wcard">
         <a href="#/bet/${x.id}" style="text-decoration:none;color:inherit">${head('', `${esc(f.name)} ${K.gv(f, 'זרקה', 'זרק')} לך כפפה 🥊`, `<span style="font-size:24px">${x.stake === 'gift' ? x.product.emoji : '🏆'}</span>`)}</a>
@@ -89,10 +89,9 @@
     let actions;
     if (b.status === 'open') actions = `
       <button class="btn" id="settle">לסגור חשבון</button>
-      <button class="btn md white" id="back">להחזיר ביף 😏</button>
       <button class="link muted" id="report">זה לא מצחיק אותי</button>`;
     else if (b.status === 'pending') actions = `
-      <div class="note center">הצעת ${GEST()[b.gesture].name} ${GEST()[b.gesture].emoji}. מחכים ל${esc(f.name)}…</div>
+      <div class="note center">ביקשת סליחה 🙏 מחכים ל${esc(f.name)}…</div>
       <a class="btn md lime" href="#/settle/${id}?coffee=1">לשדרג לקפה ☕ · סוגר מיד</a>`;
     else if (b.status === 'wantmore') actions = `
       <div class="warn center">${esc(f.name)} ${K.gv(f, 'רוצה', 'רוצה')} יותר 😤</div>
@@ -129,7 +128,7 @@
     const rejected = b.status === 'wantmore' ? b.gesture : null;
     const recGesture = b.spice === 1 ? 'apology' : null;
     const draw = () => {
-      const list = showAll ? all : all.slice(0, 3);
+      const list = showAll ? all : all.slice(0, 2);
       if (sel && !list.some((p) => p.id === sel) && !GEST()[sel]) list.push(all.find((p) => p.id === sel));
       const pick = all.find((p) => p.id === sel);
       const g = GEST()[sel];
@@ -137,17 +136,15 @@
         ${K.header('לסגור חשבון', { close: true })}
         <div class="card peach row">${K.av(f)}<div style="flex:1"><b>${esc(b.reason)}</b><div class="micro">${esc(f.name)} · ${K.timeAgo(b.createdAt)}</div></div>${K.chilis(b.spice)}</div>
         <section class="col">
-          <div class="sec"><h2>מתנה אמיתית 🎁</h2><span class="pill lime">סוגר מיד</span></div>
+          <h2>מתנה 🎁</h2>
           <div class="col" style="gap:12px">${list.map((p) => K.prodCard(p, { on: sel === p.id, badge: p.id === rec.id && b.spice > 1 ? `מומלץ ל-${'🌶'.repeat(b.spice)}` : A().likedBy(f.id, p) ? `❤ ${f.name} ${K.gv(f, 'אוהבת', 'אוהב')}` : '', badgeCls: p.id === rec.id && b.spice > 1 ? '' : 'pink' })).join('')}</div>
           ${showAll ? '' : `<button class="link" id="more">עוד ›</button>`}
         </section>
-        <section class="col">
-          <div class="sec"><h2>או משהו בחינם</h2><span class="pill">${esc(f.name)} ${K.gv(f, 'צריכה', 'צריך')} לאשר</span></div>
-          ${Object.values(GEST()).filter((x) => x.id !== rejected).map((x) => `<button class="opt" data-g="${x.id}" aria-pressed="${sel === x.id}"><span class="em">${x.emoji}</span><span style="flex:1"><span class="t">${x.name}</span>${x.id === recGesture ? ' <span class="badge">מומלץ ל-🌶</span>' : ''}<br><span class="s">${x.desc}</span></span></button>`).join('')}
-        </section>
+        ${rejected ? '' : `<section class="col"><h2>או בחינם</h2>
+          ${Object.values(GEST()).map((x) => `<button class="opt" data-g="${x.id}" aria-pressed="${sel === x.id}"><span class="em">${x.emoji}</span><span style="flex:1"><span class="t">${x.name}</span><br><span class="s">${esc(f.name)} ${K.gv(f, 'צריכה', 'צריך')} לאשר</span></span></button>`).join('')}
+        </section>`}
         <div class="stack-bottom">
-          <button class="btn ${pick ? 'lime' : ''}" id="go" ${sel ? '' : 'disabled'}>${pick ? `לשלם ${K.money(pick.price)} ולסגור` : g ? 'לשלוח הצעה' : 'בוחרים איך סוגרים'}</button>
-          ${pick ? `<p class="micro muted center" style="margin:0">${esc(f.name)} ${K.gv(f, 'תאסוף', 'יאסוף')} מ${esc(pick.biz.name)} עם קוד. אפשר לבטל תוך 24 שעות.</p>` : ''}
+          <button class="btn ${pick ? 'lime' : ''}" id="go" ${sel ? '' : 'disabled'}>${pick ? `לשלם ${K.money(pick.price)} ולסגור` : g ? 'לבקש סליחה 🙏' : 'בוחרים איך סוגרים'}</button>
         </div>`);
       K.wireBack('beef/' + id);
       K.on('.prod', 'click', (e) => { sel = e.currentTarget.dataset.pid; draw(); });
@@ -158,7 +155,7 @@
           if (!(await K.pay(pick.price, `${pick.emoji} ${pick.name} · ${pick.biz.name}`))) return;
           await A().settleWithGift(id, pick.id); K.go('closed/' + id);
         } else if (g) {
-          await A().offerGesture(id, sel); K.toast(`ההצעה נשלחה ל${f.name} ${g.emoji}`); K.go('beef/' + id);
+          await A().offerGesture(id, sel); K.toast(`נשלח ל${f.name} 🙏`); K.go('beef/' + id);
         }
       });
     };
@@ -209,7 +206,7 @@
       ? `<div class="note center">⏳ ${esc(f.name)} עוד לא ${K.gv(f, 'הצטרפה', 'הצטרף')}. ההזמנה בוואטסאפ.</div><button class="btn md white" id="resend">${K.ICON.wa}<span>לשלוח שוב בוואטסאפ</span></button>`
       : `<div class="note center">מחכים ש${esc(f.name)} ${K.gv(f, 'תסגור', 'יסגור')}… ⏳</div>${cool ? `<p class="micro center muted" style="margin:0">❄️ מתקרר לבד ${cool}</p>` : ''}`;
     else if (b.status === 'pending') body = `
-      <div class="card lime col center"><span style="font-size:40px">${GEST()[b.gesture].emoji}</span><h2>${esc(f.name)} ${K.gv(f, 'הציעה', 'הציע')} ${GEST()[b.gesture].name}</h2><span class="small">${K.timeAgo(b.gestureAt)}</span></div>
+      <div class="card lime col center"><span style="font-size:40px">${GEST()[b.gesture].emoji}</span><h2>${esc(f.name)} ${K.gv(f, 'ביקשה', 'ביקש')} סליחה</h2><span class="small">${K.timeAgo(b.gestureAt)}</span></div>
       <div class="row"><button class="btn lime" id="ok" style="flex:1">סגרנו! 🤝</button><button class="btn white" id="no" style="flex:1">זה לא מספיק 😤</button></div>`;
     else if (b.status === 'wantmore') body = `<div class="note center">ביקשת יותר 😤 מחכים ש${esc(f.name)} ${K.gv(f, 'תשדרג', 'ישדרג')}…</div>`;
     K.render(`
@@ -235,21 +232,17 @@
     const draw = () => {
       const f = st.to && A().friend(st.to);
       const reason = st.reason === '__custom' ? st.custom.trim() : st.reason;
-      const hint = { 1: '❄️ קליל. מתקרר לבד אחרי שבוע אם לא סוגרים.', 2: '☕ קלאסי. קפה סוגר את זה.', 3: '🥐 נשאר פתוח עד שסוגרים. מתאים לקפה ומאפה.' }[st.spice];
       K.render(`
-        ${K.header(ret ? 'להחזיר ביף 😏' : 'ביף חדש 😈', { close: true })}
+        ${K.header('ביף חדש 😈', { close: true })}
         <section class="col"><h3>על מי?</h3>${K.friendPicker(st.to)}</section>
         <section class="col"><h3>מה קרה?</h3>
           <div class="wrap">${A().PRESETS.map((p) => `<button class="chip" data-r="${esc(p)}" aria-pressed="${st.reason === p}">${esc(p)}</button>`).join('')}
           <button class="chip" data-r="__custom" aria-pressed="${st.reason === '__custom'}">✏️ משהו אחר</button></div>
           ${st.reason === '__custom' ? `<input class="input" id="custom" maxlength="60" placeholder="מה ${f ? esc(f.name) : 'הוא'} עשה?" value="${esc(st.custom)}"><div class="row between"><div class="warn" id="mw" hidden></div><span class="counter-hint" id="cnt">${st.custom.length}/60</span></div>` : ''}
         </section>
-        <section class="col"><h3>כמה חריף?</h3>
+        ${st.reason ? `<section class="col"><h3>כמה חריף?</h3>
           <div class="grid3">${[1, 2, 3].map((n) => `<button class="spice" data-s="${n}" aria-pressed="${st.spice === n}" aria-label="חריפות ${n} מתוך 3"><span style="font-size:22px">${'🌶'.repeat(n)}</span></button>`).join('')}</div>
-          <p class="micro muted" style="margin:0">${hint}</p>
-        </section>
-        ${f && (reason || st.reason === '__custom') ? `<section class="col"><h3>ככה ${esc(f.name)} ${K.gv(f, 'תראה', 'יראה')} את זה:</h3>
-          <div class="card peach wcard"><div class="head">${K.av(A().me())}<div class="body"><div class="k">You've been KARMAd 😈</div><b>ל${esc(A().me().name)} יש ביף איתך</b><div class="small" id="pv">${esc(reason || '…')}</div></div>${K.chilis(st.spice)}</div></div></section>` : ''}
+        </section>` : ''}
         <div class="stack-bottom">
           <button class="btn" id="send" ${f && reason ? '' : 'disabled'}>${f && f.invited ? `${K.ICON.wa}<span>לשלוח בוואטסאפ 😈</span>` : 'לשלוח 😈'}</button>
         </div>`);
@@ -262,7 +255,6 @@
         st.custom = c.value; document.getElementById('cnt').textContent = `${c.value.length}/60`;
         const bad = K.modWarn(document.getElementById('mw'), c.value);
         document.getElementById('send').disabled = !(f && c.value.trim()) || !!bad;
-        const pv = document.getElementById('pv'); if (pv) pv.textContent = c.value.trim() || '…';
       });
       K.on('#send', 'click', async () => {
         try {
@@ -277,7 +269,7 @@
 
   // ───────── חשבונות ─────────
   K.route('accounts', () => {
-    const tab = K.q.get('t') || K.state.accTab || 'beefs';
+    const tab = A().BETS ? (K.q.get('t') || K.state.accTab || 'beefs') : 'beefs';
     const filter = K.q.get('f') || K.state.accFilter || 'open';
     K.state.accTab = tab; K.state.accFilter = filter;
     let body = '';
@@ -300,11 +292,11 @@
         : `<div class="col">${s.done.map(row).join('') || '<p class="muted">עוד אין.</p>'}</div>`;
     }
     K.render(`
-      ${K.homeHeader()}
-      <h1>חשבונות</h1>
-      <div class="seg" role="group" aria-label="סוג"><button data-t="beefs" aria-pressed="${tab === 'beefs'}">ביפים 😈</button><button data-t="bets" aria-pressed="${tab === 'bets'}">התערבויות 🥊</button></div>
+      ${K.header('ביפים 😈')}
+      ${!A().BETS ? '' : `<div class="seg" role="group" aria-label="סוג"><button data-t="beefs" aria-pressed="${tab === 'beefs'}">ביפים 😈</button><button data-t="bets" aria-pressed="${tab === 'bets'}">התערבויות 🥊</button></div>`}
       <div class="tabs" role="tablist"><button class="tab" role="tab" data-f="open" aria-selected="${filter === 'open'}">פתוחים</button><button class="tab" role="tab" data-f="closed" aria-selected="${filter === 'closed'}">נסגרו</button></div>
       ${body}`, { nav: 'accounts' });
+    K.wireBack('');
     K.on('[data-t]', 'click', (e) => K.go('accounts?t=' + e.currentTarget.dataset.t + '&f=' + filter));
     K.on('[data-f]', 'click', (e) => K.go('accounts?t=' + tab + '&f=' + e.currentTarget.dataset.f));
     wireWaiting();

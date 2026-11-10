@@ -3,14 +3,15 @@
   const esc = K.esc;
   const A = () => K.api;
 
-  K.route('profile', () => {
+  K.route('profile', (sub) => {
+    if (sub === 'settings') return settings();
     const me = A().me(), t = A().myTotals(), fs = A().friends();
     const L = me.likes || {};
     K.render(`
       ${K.header('פרופיל')}
       <div class="row">${K.av(me, 'lg')}<div style="flex:1;min-width:0"><h2>${esc(me.name)}</h2><span class="micro muted"><span class="ltr">${esc(me.email)}</span> · מחובר עם Google</span></div></div>
-      <div class="stat-line"><span class="pill pink">😇 ${t.goodGot + t.goodSent}</span><span class="pill peach">😈 ${t.beefs}</span><span class="pill lime">🥊 <span class="ltr">${t.betsWon}–${t.betsLost}</span></span></div>
-      <a class="card row" href="#/wrapped" style="text-decoration:none;background:var(--ink);color:var(--cream)"><span style="font-size:26px">✨</span><b style="flex:1;text-align:right"><span class="ltr">Your month in KARMA.</span></b>${K.ICON.fwd}</a>
+      <div class="stat-line"><span class="pill pink">😇 ${t.goodGot + t.goodSent}</span><span class="pill peach">😈 ${t.beefs}</span>${A().BETS ? `<span class="pill lime">🥊 <span class="ltr">${t.betsWon}–${t.betsLost}</span></span>` : ''}</div>
+      ${!A().canWrap() ? '' : `<a class="card row" href="#/wrapped" style="text-decoration:none;background:var(--ink);color:var(--cream)"><span style="font-size:26px">✨</span><b style="flex:1;text-align:right"><span class="ltr">Your month in KARMA.</span></b>${K.ICON.fwd}</a>`}
 
       <section class="col"><div class="sec"><h2>חברים (${fs.length})</h2><a class="small" href="#/friends">לכולם ›</a></div>
         <div class="friends-row">${fs.map((f) => `<a class="friend-pick" href="#/friend/${f.id}" style="text-decoration:none;color:inherit">${K.av(f, 'lg')}<span>${esc(f.name)}</span></a>`).join('')}</div>
@@ -19,8 +20,29 @@
       <section class="col"><h2>יום ההולדת שלי 🎂</h2>
         <div class="row"><select class="input" id="bd-d" aria-label="יום"><option value="">יום</option>${Array.from({ length: 31 }, (_, i) => `<option ${me.birthday && +me.birthday.split('-')[1] === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
         <select class="input" id="bd-m" aria-label="חודש"><option value="">חודש</option>${K.MONTHS.map((m, i) => `<option value="${i + 1}" ${me.birthday && +me.birthday.split('-')[0] === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
-        <p class="micro muted" style="margin:0">חברים יקבלו תזכורת כמה ימים לפני. בלי שנה.</p></section>
+</section>
 
+      <div class="list">
+        <a href="#/profile/settings"><span>⚙️</span><span class="grow">הגדרות</span>${K.ICON.fwd}</a>
+        <a href="#/profile/settings"><span>💝</span><span class="grow">מה משמח אותי</span>${K.ICON.fwd}</a>
+      </div>
+      <section class="col"><h2>הדגמה: צד העסק</h2>
+        <div class="list">
+          <a href="#/c/lotus"><span>📱</span><span class="grow">סריקת QR בבית הקפה</span>${K.ICON.fwd}</a>
+          <a href="#/biz"><span>☕</span><span class="grow">הלוח של בעל העסק</span>${K.ICON.fwd}</a>
+          <a href="#/admin"><span>🧰</span><span class="grow">כלי צירוף עסקים (שלך)</span>${K.ICON.fwd}</a>
+        </div></section>
+
+      </div>
+      <div class="list"><button id="reset"><span class="grow">איפוס ההדגמה</span></button></div>`, { nav: 'profile' });
+    K.wireBack('');
+    wireProfile();
+  });
+
+  function settings() {
+    const me = A().me(); const L = me.likes || {};
+    K.render(`
+      ${K.header('הגדרות')}
       <section class="col"><h2>מה משמח אותי</h2><p class="micro muted" style="margin:0">חברים רואים את זה כשהם שולחים לך מתנה.</p>
         <label class="field">☕ הקפה שלי<input class="input" data-like="coffee" value="${esc(L.coffee || '')}" placeholder="הפוך על שיבולת" maxlength="30"></label>
         <label class="field">🍦 מתוק אהוב<input class="input" data-like="sweet" value="${esc(L.sweet || '')}" placeholder="גלידה פיסטוק" maxlength="30"></label>
@@ -31,27 +53,23 @@
 
       <section class="col"><h2>התראות</h2>
         <div class="list">
-          <div><span class="grow"><b>מיד</b><br><span class="micro muted">ביף, גוד קארמה והתערבות חדשה</span></span><span class="pill lime">תמיד</span></div>
+          <div><span class="grow"><b>מיד</b><br><span class="micro muted">ביף או גוד קארמה חדשים</span></span><span class="pill lime">תמיד</span></div>
           <div><span class="grow"><b>כל השאר בסיכום יומי</b><br><span class="micro muted">הצעות, תודות, תזכורות</span></span>
             <select class="input" id="digest" style="width:auto;height:40px">${[['18:00', '18:00'], ['20:00', '20:00'], ['now', 'הכול מיד']].map(([v, t]) => `<option value="${v}" ${me.notif.digest === v ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
           <div><span class="grow"><b>שקט בלילה</b><br><span class="micro muted">23:00–08:00 · חוץ מגוד קארמה של יום הולדת</span></span><button class="toggle" role="switch" id="quiet" aria-checked="${me.notif.quiet}" aria-label="שקט בלילה"></button></div>
-        </div></section>
-
-      <section class="col"><h2>הדגמה: צד העסק</h2>
-        <div class="list">
-          <a href="#/c/lotus"><span>📱</span><span class="grow">סריקת QR בבית הקפה</span>${K.ICON.fwd}</a>
-          <a href="#/biz"><span>☕</span><span class="grow">הלוח של בעל העסק</span>${K.ICON.fwd}</a>
-          <a href="#/admin"><span>🧰</span><span class="grow">כלי צירוף עסקים (שלך)</span>${K.ICON.fwd}</a>
         </div></section>
 
       <div class="list">
         <a href="#/privacy"><span class="grow">מדיניות פרטיות</span>${K.ICON.fwd}</a>
         <a href="#/terms"><span class="grow">תנאי שימוש</span>${K.ICON.fwd}</a>
         <button id="out"><span class="grow">התנתקות</span></button>
-        <button id="reset"><span class="grow">איפוס ההדגמה</span></button>
         <button id="del" style="color:#B3261E"><span class="grow"><b>מחיקת החשבון</b></span></button>
       </div>`, { nav: 'profile' });
-    K.wireBack('');
+    K.wireBack('profile');
+    wireProfile();
+  }
+
+  function wireProfile() {
     K.on('#inv', 'click', () => K.shareWA(K.inviteText('plain')));
     const saveBd = () => { const d = document.getElementById('bd-d').value, m = document.getElementById('bd-m').value; if (d && m) { A().updateMe({ birthday: `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` }); K.toast('נשמר 🎂'); } };
     K.on('#bd-d', 'change', saveBd); K.on('#bd-m', 'change', saveBd);
@@ -64,15 +82,15 @@
     K.on('#quiet', 'click', (e) => { const v = e.currentTarget.getAttribute('aria-checked') !== 'true'; e.currentTarget.setAttribute('aria-checked', v); A().updateMe({ notif: Object.assign({}, A().me().notif, { quiet: v }) }); });
     K.on('#out', 'click', async () => { await A().signOut(); K.go('welcome'); });
     K.on('#reset', 'click', async () => { if (await K.confirm('לאפס את ההדגמה?', 'הכול חוזר להתחלה, כולל הכניסה.', 'לאפס')) { await A().reset(); K.go('welcome'); } });
-    K.on('#del', 'click', async () => { if (await K.confirm('למחוק את החשבון?', 'הכול נמחק: ביפים, גוד קארמה, התערבויות וחברים. מתנות שלא מומשו יאבדו.', 'למחוק לתמיד', 'ביטול', true)) { await A().deleteAccount(); K.go('welcome'); } });
-  });
+    K.on('#del', 'click', async () => { if (await K.confirm('למחוק את החשבון?', 'הכול נמחק: ביפים, גוד קארמה וחברים. מתנות שלא מומשו יאבדו.', 'למחוק לתמיד', 'ביטול', true)) { await A().deleteAccount(); K.go('welcome'); } });
+  }
 
   K.route('friends', () => {
     const fs = A().friends();
     K.render(`
       ${K.header('חברים')}
       <button class="btn md white" id="inv">${K.ICON.wa}<span>להזמין חברים</span></button>
-      <div class="col">${fs.map((f) => { const b = A().balanceWith(f.id); return `<a class="beef" href="#/friend/${f.id}">${K.av(f)}<span class="body"><span class="reason">${esc(f.name)}${f.invited ? ' · ⏳ הוזמן' : ''}</span><span class="meta">😇 ${b.good} · 😈 ${b.bets ? b.bad : 0} · 🥊 <span class="ltr">${b.bets.won}–${b.bets.lost}</span></span></span>${K.ICON.fwd}</a>`; }).join('')}</div>`);
+      <div class="col">${fs.map((f) => { const b = A().balanceWith(f.id); return `<a class="beef" href="#/friend/${f.id}">${K.av(f)}<span class="body"><span class="reason">${esc(f.name)}${f.invited ? ' · ⏳ הוזמן' : ''}</span><span class="meta">😇 ${b.good} · 😈 ${b.bets ? b.bad : 0}</span></span>${K.ICON.fwd}</a>`; }).join('')}</div>`);
     K.wireBack('profile');
     K.on('#inv', 'click', () => K.shareWA(K.inviteText('plain')));
   });
@@ -95,17 +113,17 @@
         <div class="row between"><b>😇 ${b.good} גוד קארמה</b><b>😈 ${b.bad} ביפים</b></div>
         <div class="bar" aria-hidden="true"><span class="g" style="width:${(b.good / tot) * 100}%"></span><span class="b" style="width:${(b.bad / tot) * 100}%"></span></div>
         <div class="row between micro"><span>שלחת 😇${b.mine.good} · 😈${b.mine.bad}</span><span>${esc(f.name)} 😇${b.theirs.good} · 😈${b.theirs.bad}</span></div>
-        <div class="row between"><span class="small">התערבויות</span><b class="ltr">${b.bets.won}–${b.bets.lost} 🏆</b></div>
+        ${A().BETS ? `<div class="row between"><span class="small">התערבויות</span><b class="ltr">${b.bets.won}–${b.bets.lost} 🏆</b></div>` : ''}
       </div>
       ${f.birthday || likes.length ? `<div class="card lav col">${f.birthday ? `<div>🎂 <b>${K.bdayText(f.birthday)}</b> · ${(() => { const d = K.daysToBirthday(f.birthday); return d === 0 ? 'היום!' : `עוד ${d} ימים`; })()}</div>` : ''}
         ${likes.length ? `<div class="small"><b>מה משמח את ${esc(f.name)}:</b> ${likes.map((x) => `${x[0]} ${esc(x[1])}`).join(' · ')}</div>` : ''}</div>` : ''}
-      <div class="grid3">
-        <a class="btn md pink" href="#/new-karma?to=${id}">😇</a><a class="btn md" href="#/new-beef?to=${id}">😈</a><a class="btn md lime" href="#/new-bet?to=${id}">🥊</a>
+      <div class="grid2">
+        <a class="btn md pink" href="#/new-karma?to=${id}">😇 גוד קארמה</a><a class="btn md" href="#/new-beef?to=${id}">😈 ביף</a>
       </div>
       <section class="col"><h2>היסטוריה</h2><div class="list">${b.history.map(hrow).join('') || '<div class="muted">עוד ריק. מישהו צריך להתחיל 😈</div>'}</div></section>
       <button class="btn md white" id="share">⤴ לשתף את המאזן</button>`);
     K.wireBack('friends');
-    K.on('#share', 'click', () => K.shareStory({ bg: 'pinkSoft', kicker: 'KARMA BALANCE', title: `${me.name} & ${f.name}`, card: { lines: [`😇 ${b.good}   ·   😈 ${b.bad}`, `🥊 ${b.bets.won}–${b.bets.lost}`] } }, 'balance'));
+    K.on('#share', 'click', () => K.shareStory({ bg: 'pinkSoft', kicker: 'KARMA BALANCE', title: `${me.name} & ${f.name}`, card: { lines: [`😇 ${b.good}   ·   😈 ${b.bad}`] } }, 'balance'));
   });
 
   K.route('inbox', async () => {
@@ -115,7 +133,6 @@
     const d = A().me().notif.digest;
     K.render(`
       ${K.header('התראות')}
-      <p class="micro muted" style="margin:0">ביף, גוד קארמה והתערבות חדשה מגיעים מיד. ${d === 'now' ? 'גם כל השאר מגיע מיד.' : `כל השאר בסיכום יומי ב-${d}.`} <a href="#/profile">לשנות</a></p>
       ${fresh.length ? `<section class="col"><h2>חדש</h2><div class="list">${fresh.map(row).join('')}</div></section>` : ''}
       ${old.length ? `<section class="col"><h2>קודם</h2><div class="list">${old.map(row).join('')}</div></section>` : ''}
       ${!ns.length ? '<p class="muted center">שקט פה. בינתיים 😇</p>' : ''}`);
@@ -141,7 +158,7 @@
       `<div class="en" style="font-size:44px;line-height:1">Your ${mName}<br>in KARMA<span style="color:var(--pink)">.</span></div><p>החודש שלך, בשישה רגעים.</p>`,
       `<div class="en" style="font-size:90px">${w.closed} 😈</div><div class="en" style="font-size:26px">closed</div>${fast ? `<p>הביף הכי מהיר נסגר תוך ${fast} ⚡</p>` : ''}`,
       `<div class="en" style="font-size:90px">${w.goodSent} 😇</div><div class="en" style="font-size:26px">given</div><p>וקיבלת ${w.goodGot}</p>`,
-      `<div class="en" style="font-size:90px">🥊 ${w.won}–${w.lost}</div><div class="en" style="font-size:26px">${w.lost === 0 ? 'Undefeated.' : 'Undefeated? Almost.'}</div>`,
+      ...(A().BETS ? [`<div class="en" style="font-size:90px">🥊 ${w.won}–${w.lost}</div><div class="en" style="font-size:26px">${w.lost === 0 ? 'Undefeated.' : 'Undefeated? Almost.'}</div>`] : []),
       w.best ? `<div class="en" style="font-size:24px">Best friend of the month</div><div class="row" style="justify-content:center">${K.av(w.best, 'xl')}</div><h1>${esc(w.best.name)}</h1><div class="en" style="font-size:28px">😇${w.bestBal.good} · 😈${w.bestBal.bad}</div>` : `<div class="en" style="font-size:28px">Best friend of the month</div><p>עוד אין. אולי בחודש הבא?</p>`,
       `<div class="en" style="font-size:22px">This month you were…</div><div style="font-size:90px">${per[0]}</div><div class="en" style="font-size:40px">${per[1]}</div><p>${per[2]}</p>
        <label class="row" style="justify-content:center;font-size:13px"><input type="checkbox" id="hide"> להסתיר את השם של ${w.best ? esc(w.best.name) : 'החבר'} בתמונה</label>
@@ -163,7 +180,7 @@
       const sh = el.querySelector('#share');
       if (sh) sh.onclick = () => {
         const hide = el.querySelector('#hide').checked;
-        K.shareStory({ bg: 'ink', kicker: `MY ${mName.toUpperCase()} IN KARMA.`, big: per[0], card: { lines: [per[1], `😈 ${w.closed} closed · 😇 ${w.goodSent} given · 🥊 ${w.won}–${w.lost}`, w.best ? `BFF: ${hide ? '🤫' : w.best.name}` : ''].filter(Boolean), fill: 'pink' } }, 'wrapped');
+        K.shareStory({ bg: 'ink', kicker: `MY ${mName.toUpperCase()} IN KARMA.`, big: per[0], card: { lines: [per[1], `😈 ${w.closed} closed · 😇 ${w.goodSent} given`, w.best ? `BFF: ${hide ? '🤫' : w.best.name}` : ''].filter(Boolean), fill: 'pink' } }, 'wrapped');
       };
     };
     K.render('', {});
