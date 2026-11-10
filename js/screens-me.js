@@ -9,7 +9,7 @@
     const L = me.likes || {};
     K.render(`
       ${K.header('פרופיל')}
-      <div class="row">${K.av(me, 'lg')}<div style="flex:1;min-width:0"><h2>${esc(me.name)}</h2><span class="micro muted"><span class="ltr">${esc(me.email)}</span> · מחובר עם Google</span></div></div>
+      <div class="row">${K.av(me, 'lg')}<div style="flex:1;min-width:0"><h2>${esc(me.name)}</h2><span class="micro muted"><span class="ltr">${esc(me.email)}</span> · מחובר עם ${me.provider || 'Google'}</span></div></div>
       <div class="stat-line"><span class="pill pink">😇 ${t.goodGot + t.goodSent}</span><span class="pill peach">😈 ${t.beefs}</span>${A().BETS ? `<span class="pill lime">🥊 <span class="ltr">${t.betsWon}–${t.betsLost}</span></span>` : ''}</div>
       ${!A().canWrap() ? '' : `<a class="card row" href="#/wrapped" style="text-decoration:none;background:var(--ink);color:var(--cream)"><span style="font-size:26px">✨</span><b style="flex:1;text-align:right"><span class="ltr">Your month in KARMA.</span></b>${K.ICON.fwd}</a>`}
 

@@ -59,6 +59,24 @@
     if (kind === 'karma') return `You've been KARMAd 😇\nל${me} יש משהו טוב בשבילך. נכנסים לראות ›\n${K.link('karma')}`;
     return `הזמנה מ${me} ל-KARMA. 😈😇\nביפים, גוד קארמה ומתנות אמיתיות בין חברים ›\n${K.link('plain')}`;
   };
+  // Simulated "Continue with Apple".
+  K.apple = async () => {
+    const v = await K.sheetHTML(`<div class="row" style="gap:8px">${K.ICON.apple}<b>כניסה עם Apple ID</b></div>
+      <button class="opt" data-v="ok"><span class="av pink">א</span><span style="flex:1"><span class="t">אור</span><br><span class="s">אפשר להסתיר את המייל</span></span></button>
+      <p class="micro muted" style="margin:0">בהדגמה אין כניסה אמיתית.</p>
+      <button class="btn ghost" data-v="">ביטול</button>`, 'כניסה עם Apple');
+    if (v !== 'ok') return false;
+    await K.api.signIn(); await K.api.updateMe({ provider: 'Apple' }); return true;
+  };
+  // Pick a provider (used right before paying on the QR page).
+  K.login = async () => {
+    const v = await K.sheetHTML(`<h2>רגע לפני התשלום</h2>
+      <button class="btn dark" data-v="apple">${K.ICON.apple}<span>המשך עם Apple</span></button>
+      <button class="btn white" data-v="google">${K.ICON.google}<span>המשך עם Google</span></button>`, 'כניסה');
+    if (v === 'apple') return K.apple();
+    if (v === 'google') return K.google();
+    return false;
+  };
   // Simulated "Continue with Google" (the real one comes with the server).
   K.google = async () => {
     const v = await K.sheetHTML(`<div class="row" style="gap:8px">${K.ICON.google}<b>בחירת חשבון</b></div>
@@ -67,7 +85,7 @@
       <p class="micro muted" style="margin:0">בהדגמה אין כניסה אמיתית. Google תשתף רק שם, תמונה ומייל.</p>
       <button class="btn ghost" data-v="">ביטול</button>`, 'כניסה עם Google');
     if (v !== 'ok') return false;
-    await K.api.signIn(); return true;
+    await K.api.signIn(); await K.api.updateMe({ provider: 'Google' }); return true;
   };
 
   // ───────── visual atoms ─────────

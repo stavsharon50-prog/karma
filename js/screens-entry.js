@@ -3,7 +3,11 @@
   const { esc, api } = { esc: K.esc, get api() { return K.api; } };
 
   const fine = `<p class="micro muted center" style="margin:0">בכניסה מאשרים שמלאו לך 18 ושקראת את <a href="#/terms">התנאים</a> ואת <a href="#/privacy">מדיניות הפרטיות</a>.</p>`;
-  const googleBtn = (label) => `<button class="btn white" id="g">${K.ICON.google}<span>${label}</span></button>`;
+  const googleBtn = () => `<button class="btn dark" id="ap">${K.ICON.apple}<span>המשך עם Apple</span></button><button class="btn white" id="g">${K.ICON.google}<span>המשך עם Google</span></button>`;
+  const wireLogin = () => {
+    K.on('#g', 'click', async () => { if (await K.google()) afterLogin(); });
+    K.on('#ap', 'click', async () => { if (await K.apple()) afterLogin(); });
+  };
 
   async function afterLogin() {
     const inv = K.api.invite();
@@ -27,7 +31,7 @@
       </div>
       <p class="center" style="margin:0;font-size:16px"><b>מישהו חייב לך?</b> פותחים ביף. <b>מגיע למישהו?</b> שולחים גוד קארמה. וסוגרים הכול בקפה אמיתי.</p>
       <div class="stack-bottom">
-        ${googleBtn('המשך עם Google')}
+        ${googleBtn()}
         <p class="small center" style="margin:0">🔒 רק חברים שאישרת יכולים לשלוח לך ביף או גוד קארמה.</p>
         ${fine}
         <details class="micro muted center"><summary>הדגמה: איך זה נראה כשמזמינים אותך?</summary>
@@ -35,7 +39,7 @@
             <button class="chip" data-demo="beef">עם ביף 😈</button><button class="chip" data-demo="karma">עם גוד קארמה 😇</button><button class="chip" data-demo="plain">הזמנה רגילה</button><button class="chip" data-demo="fresh">משתמש חדש לגמרי</button>
           </div></details>
       </div>`);
-    K.on('#g', 'click', async () => { if (await K.google()) afterLogin(); });
+    wireLogin();
     K.on('[data-demo]', 'click', async (e) => {
       const d = e.currentTarget.dataset.demo;
       if (d === 'fresh') { K.state.fresh = true; if (await K.google()) afterLogin(); return; }
@@ -66,8 +70,8 @@
     K.render(`
       <div class="row between">${K.logo()}<button class="link muted micro" id="noinv">זו לא הזמנה שלי</button></div>
       ${card}
-      <div class="stack-bottom">${googleBtn(inv.kind === 'plain' ? 'המשך עם Google' : 'להתחבר ולראות')}${fine}</div>`, { theme: inv.kind === 'beef' ? 'peach' : inv.kind === 'karma' ? 'pink' : '' });
-    K.on('#g', 'click', async () => { if (await K.google()) afterLogin(); });
+      <div class="stack-bottom">${googleBtn()}${fine}</div>`, { theme: inv.kind === 'beef' ? 'peach' : inv.kind === 'karma' ? 'pink' : '' });
+    wireLogin();
     K.on('#noinv', 'click', () => { K.api.setInvite(null); K.routes.welcome(); });
   }
 

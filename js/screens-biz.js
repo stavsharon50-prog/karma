@@ -38,7 +38,7 @@
         </section>
         <div class="stack-bottom">
           <button class="btn lime" id="go" ${ready ? '' : 'disabled'}>${p ? `להמשיך · ${K.money(p.price)}` : 'בוחרים מה שולחים'}</button>
-          ${!signed ? '<p class="micro muted center" style="margin:0">כניסה עם Google רגע לפני התשלום. בלי הרשמה ארוכה.</p>' : ''}
+          ${!signed ? '<p class="micro muted center" style="margin:0">כניסה עם Apple או Google רגע לפני התשלום.</p>' : ''}
         </div>`}`);
       K.on('#smart', 'click', () => { Object.assign(st, { to: smart.friend.id, why: 'beef', beefId: smart.id, pid: st.pid || (b.products[0] || {}).id }); draw(); });
       K.on('.prod', 'click', (e) => { st.pid = e.currentTarget.dataset.pid; draw(); });
@@ -52,7 +52,7 @@
       if (m) m.addEventListener('input', () => { st.msg = m.value; K.modWarn(document.getElementById('mw'), m.value); });
       K.on('#go', 'click', async () => {
         if (st.msg && K.modWarn(null, st.msg)) return K.toast(K.MOD_MSG[K.modWarn(null, st.msg)]);
-        if (!A().signedIn()) { if (!(await K.google())) return; A().setOnboarded(); }
+        if (!A().signedIn()) { if (!(await K.login())) return; A().setOnboarded(); }
         if (!(await K.pay(p.price, `${p.emoji} ${p.name} · ${b.name}`))) return;
         try {
           let to = st.to;
