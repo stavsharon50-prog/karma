@@ -71,8 +71,8 @@
   // Pick a provider (used right before paying on the QR page).
   K.login = async () => {
     const v = await K.sheetHTML(`<h2>רגע לפני התשלום</h2>
-      <button class="btn dark" data-v="apple">${K.ICON.apple}<span>המשך עם Apple</span></button>
-      <button class="btn white" data-v="google">${K.ICON.google}<span>המשך עם Google</span></button>`, 'כניסה');
+      <button class="btn login dark" data-v="apple">${K.ICON.apple}<span>המשך עם Apple</span></button>
+      <button class="btn login white" data-v="google">${K.ICON.google}<span>המשך עם Google</span></button>`, 'כניסה');
     if (v === 'apple') return K.apple();
     if (v === 'google') return K.google();
     return false;
@@ -195,8 +195,8 @@
     if (!e.target.closest('[data-plus]')) return;
     const v = await K.sheetHTML(`<h2>מה שולחים?</h2>
       <div class="col" style="gap:8px">
-        <button class="opt" data-v="new-beef" style="background:var(--peach)"><span class="em">😈</span><span style="flex:1"><span class="t">ביף</span><br><span class="s">מישהו אכל לך את הצ׳יפס?</span></span></button>
-        <button class="opt" data-v="new-karma" style="background:var(--pink)"><span class="em">😇</span><span style="flex:1"><span class="t">גוד קארמה</span><br><span class="s" style="color:var(--ink)">תודה, מזל טוב, סתם כי התגעגעת</span></span></button>
+        <button class="opt" data-v="new-beef" style="background:#FFEDE6"><span class="em">😈</span><span style="flex:1"><span class="t">ביף</span><br><span class="s">מישהו חייב לך משהו קטן? איחר, שכח, אכל לך את הצ׳יפס</span></span></button>
+        <button class="opt" data-v="new-karma" style="background:var(--pink-soft)"><span class="em">😇</span><span style="flex:1"><span class="t">גוד קארמה</span><br><span class="s" style="color:var(--ink)">בא לך לפרגן? תודה, מזל טוב, סתם כי התגעגעת</span></span></button>
         ${K.api.BETS ? '' : '<!--'}<button class="opt" data-v="new-bet" style="background:var(--lime)"><span class="em">🥊</span><span style="flex:1"><span class="t">התערבות</span><br><span class="s" style="color:var(--ink)">על הכבוד, או על קפה</span></span></button>${K.api.BETS ? '' : '-->'}
       </div><button class="btn ghost" data-v="">ביטול</button>`, 'מה שולחים?');
     if (v) { K.api.log('create_sheet', { pick: v }); K.go(v); }

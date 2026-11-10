@@ -18,6 +18,7 @@
       const ready = f && st.occ && (st.pid || st.noGift);
       K.render(`
         ${K.header('גוד קארמה 😇', { close: true })}
+        <p class="muted" style="margin:-8px 0 0">מפרגנים למישהו. מילים טובות, ואם בא לך גם מתנה קטנה שהוא אוסף בעסק.</p>
         <section class="col"><h3>למי?</h3>${K.friendPicker(st.to)}</section>
         <section class="col"><h3>על מה?</h3>
           <div class="wrap">${A().OCCASIONS.map((o) => `<button class="chip" data-o="${o.id}" aria-pressed="${st.occ === o.id}">${o.emoji} ${o.name}</button>`).join('')}</div></section>

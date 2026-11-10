@@ -488,34 +488,19 @@ h2, .h2 { font-size: 19px; }
 .seg button { border-radius: 11px; height: 40px; }
 .seg button[aria-pressed="true"] { background: var(--white); color: var(--ink); box-shadow: 0 1px 3px rgba(27, 17, 22, .18); }
 
-/* ───────── hierarchy v3: white cards, one colored hero per screen ───────── */
-:root { --line: 2px solid var(--ink); }
-h1, .h1 { font-size: 30px; }
-h2, .h2 { font-size: 20px; }
-h3.sub, .sec h2 { font-family: var(--body); font-size: 14px; font-weight: 700; color: var(--grey); }
-.card { background: var(--white); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
-.card.flat { box-shadow: none; }
-.card.peach, .card.pink, .card.lime, .card.lav, .card.cream { background: var(--white); }
-.card.hero { border-width: 2.5px; box-shadow: 5px 5px 0 var(--ink); }
-.card.hero.peach { background: var(--peach); } .card.hero.pink { background: var(--pink); } .card.hero.lime { background: var(--lime); } .card.hero.lav { background: var(--lavender); }
-.card.hero .wcard, .card.hero.wcard { gap: 14px; }
-.card.hero.wcard .head b { font-family: var(--display); font-weight: 900; font-size: 20px; line-height: 1.2; }
-.card.hero.wcard .k { color: var(--ink); }
-.card.hero.pink .micro.muted { color: var(--ink); }
-/* a thin colored edge tells beef from good karma, without painting the card */
-.wcard.peach:not(.hero) { border-inline-start: 6px solid var(--chili); }
-.wcard.pink:not(.hero) { border-inline-start: 6px solid var(--pink); }
-.wcard.lime:not(.hero) { border-inline-start: 6px solid #9BC21A; }
-.wcard .k { color: var(--grey); font-size: 13px; }
-.wcard b, .gift-card b { font-weight: 600; }
-.beef, .gift-card, .prod, .opt, .kpi, .list, .vs .side, .spice, .chip, .input, textarea.input, .icon-btn { border: 2px solid var(--ink); }
-.beef, .gift-card, .prod { box-shadow: none; }
-.icon-btn { box-shadow: 2px 2px 0 var(--ink); }
+/* ───────── hierarchy: calm cards, one hero per screen ───────── */
+h3.sub { font-family: var(--body); font-size: 14px; font-weight: 700; color: var(--grey); margin: 0; }
+.card.hero.wcard { border: 2px solid var(--ink); gap: 14px; }
+.card.hero.wcard .t1 { font-size: 13px; }
+.card.hero.wcard .t2 { font-family: var(--display); font-weight: 900; font-size: 21px; line-height: 1.2; }
+.wcard .t1 { display: block; font-size: 13px; font-weight: 600; color: var(--grey); }
+.wcard .t2 { display: block; font-size: 16px; font-weight: 600; }
 .list.rows > a { padding: 12px 14px; }
 .row-t { font-weight: 600; }
-.kind { width: 30px; height: 30px; flex: none; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 1.5px solid var(--ink); }
-.kind.bad { background: var(--peach); } .kind.good { background: var(--pink-soft); }
-.btn.md.white, .btn.white.md { border: 2px solid var(--ink); box-shadow: none; }
-.btn.md:not(.white):not(.ghost) { box-shadow: 2px 2px 0 var(--ink); }
-.note { border: 1.5px dashed var(--ink); }
-.av { border-width: 2px; }
+.kind { width: 30px; height: 30px; flex: none; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.kind.bad { background: #FFE3D8; } .kind.good { background: var(--pink-soft); }
+/* login buttons in the same soft style */
+.btn.login { box-shadow: none; border: var(--line); border-radius: 16px; font-family: var(--body); font-weight: 600; font-size: 16px; min-height: 52px; }
+.btn.login.dark { border-color: var(--ink); }
+.def { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.def b { white-space: nowrap; }

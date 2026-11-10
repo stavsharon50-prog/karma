@@ -3,7 +3,7 @@
   const { esc, api } = { esc: K.esc, get api() { return K.api; } };
 
   const fine = `<p class="micro muted center" style="margin:0">בכניסה מאשרים שמלאו לך 18 ושקראת את <a href="#/terms">התנאים</a> ואת <a href="#/privacy">מדיניות הפרטיות</a>.</p>`;
-  const googleBtn = () => `<button class="btn dark" id="ap">${K.ICON.apple}<span>המשך עם Apple</span></button><button class="btn white" id="g">${K.ICON.google}<span>המשך עם Google</span></button>`;
+  const googleBtn = () => `<button class="btn login dark" id="ap">${K.ICON.apple}<span>המשך עם Apple</span></button><button class="btn login white" id="g">${K.ICON.google}<span>המשך עם Google</span></button>`;
   const wireLogin = () => {
     K.on('#g', 'click', async () => { if (await K.google()) afterLogin(); });
     K.on('#ap', 'click', async () => { if (await K.apple()) afterLogin(); });
@@ -23,13 +23,16 @@
       <div class="col center" style="gap:6px;margin-top:8px">${K.logo('xl')}<p class="h2" style="margin:6px 0 0">הכול חוזר.</p></div>
       <div class="col" style="gap:14px;margin:6px 0">
         <div class="card peach wcard" style="transform:rotate(1.5deg)">
-          <div class="head">${K.av({ name: 'מאיה', color: 'pink' })}<div class="body"><div class="k">You've been KARMAd 😈</div><b>מאיה: אכלת לי את הצ׳יפס 🍟</b></div>${K.chilis(2)}</div>
+          <div class="head">${K.av({ name: 'מאיה', color: 'pink' })}<div class="body"><div class="k">You've been KARMAd 😈</div><b>מאיה פתחה איתך ביף</b><div class="small">על: אכלת לי את הצ׳יפס 🍟</div></div>${K.chilis(2)}</div>
         </div>
         <div class="card pink wcard" style="transform:rotate(-1.5deg)">
-          <div class="head">${K.av({ name: 'נוי', color: 'lime' })}<div class="body"><div class="k">You've been KARMAd 😇</div><b>נוי: סתם כי התגעגעתי 🫶</b></div><span style="font-size:26px">☕</span></div>
+          <div class="head">${K.av({ name: 'נוי', color: 'lime' })}<div class="body"><div class="k">You've been KARMAd 😇</div><b>נוי שלחה לך גוד קארמה</b><div class="small">סתם כי התגעגעתי 🫶 · ומתנה: קפה</div></div><span style="font-size:26px">☕</span></div>
         </div>
       </div>
-      <p class="center" style="margin:0;font-size:16px"><b>מישהו חייב לך?</b> פותחים ביף. <b>מגיע למישהו?</b> שולחים גוד קארמה. וסוגרים הכול בקפה אמיתי.</p>
+      <div class="col" style="gap:6px">
+        <div class="def"><span>😈</span><span><b>ביף</b> · כשמישהו חייב לך משהו קטן. הוא סוגר בסליחה או בקפה.</span></div>
+        <div class="def"><span>😇</span><span><b>גוד קארמה</b> · כשבא לך לפרגן למישהו. עם מתנה קטנה או בלי.</span></div>
+      </div>
       <div class="stack-bottom">
         ${googleBtn()}
         <p class="small center" style="margin:0">🔒 רק חברים שאישרת יכולים לשלוח לך ביף או גוד קארמה.</p>
@@ -119,8 +122,8 @@
     K.render(`
       <div class="col" style="gap:6px;margin-top:10px"><h1>עם מי מתחילים?</h1></div>
       <div class="col" style="gap:10px">
-        <button class="opt" data-k="beef" style="background:var(--peach)"><span class="em">😈</span><span style="flex:1"><span class="t">לפתוח ביף על מישהו</span></span></button>
-        <button class="opt" data-k="karma" style="background:var(--pink)"><span class="em">😇</span><span style="flex:1"><span class="t">לשלוח גוד קארמה</span></span></button>
+        <button class="opt" data-k="beef" style="background:#FFEDE6"><span class="em">😈</span><span style="flex:1"><span class="t">לפתוח ביף על מישהו</span></span></button>
+        <button class="opt" data-k="karma" style="background:var(--pink-soft)"><span class="em">😇</span><span style="flex:1"><span class="t">לשלוח גוד קארמה</span></span></button>
         <button class="opt" data-k="plain"><span class="em">💬</span><span style="flex:1"><span class="t">רק להזמין</span></span></button>
       </div>
       <div class="stack-bottom"><button class="btn ghost" id="later">אחר כך</button></div>`);
