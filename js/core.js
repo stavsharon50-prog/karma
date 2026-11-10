@@ -130,7 +130,8 @@
 
   // ───────── navigation & rendering ─────────
   K.go = (path) => { location.hash = '#/' + path; };
-  K.back = (fallback) => { if (K.state.navCount > 1 && history.length > 1) history.back(); else K.go(fallback || ''); };
+  // Always a known screen: browser history is unreliable inside embedded previews.
+  K.back = (fallback) => K.go(fallback || '');
   K.on = (sel, ev, fn) => $app().querySelectorAll(sel).forEach((el) => el.addEventListener(ev, fn));
 
   K.bottomNav = (active) => {

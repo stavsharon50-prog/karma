@@ -8,9 +8,9 @@
     const L = me.likes || {};
     K.render(`
       ${K.header('פרופיל')}
-      <div class="col center" style="gap:6px">${K.av(me, 'xl')}<h1>${esc(me.name)}</h1><span class="micro muted"><span class="ltr">${esc(me.email)}</span> · מחובר עם Google</span></div>
-      <div class="stat-line" style="justify-content:center"><span class="pill pink">😇 ${t.goodGot + t.goodSent}</span><span class="pill peach">😈 ${t.beefs}</span><span class="pill lime">🥊 <span class="ltr">${t.betsWon}–${t.betsLost}</span></span></div>
-      <a class="card row" href="#/wrapped" style="text-decoration:none;background:var(--ink);color:var(--cream)"><span style="font-size:26px">✨</span><b style="flex:1" class="ltr">Your month in KARMA.</b>${K.ICON.fwd}</a>
+      <div class="row">${K.av(me, 'lg')}<div style="flex:1;min-width:0"><h2>${esc(me.name)}</h2><span class="micro muted"><span class="ltr">${esc(me.email)}</span> · מחובר עם Google</span></div></div>
+      <div class="stat-line"><span class="pill pink">😇 ${t.goodGot + t.goodSent}</span><span class="pill peach">😈 ${t.beefs}</span><span class="pill lime">🥊 <span class="ltr">${t.betsWon}–${t.betsLost}</span></span></div>
+      <a class="card row" href="#/wrapped" style="text-decoration:none;background:var(--ink);color:var(--cream)"><span style="font-size:26px">✨</span><b style="flex:1;text-align:right"><span class="ltr">Your month in KARMA.</span></b>${K.ICON.fwd}</a>
 
       <section class="col"><div class="sec"><h2>חברים (${fs.length})</h2><a class="small" href="#/friends">לכולם ›</a></div>
         <div class="friends-row">${fs.map((f) => `<a class="friend-pick" href="#/friend/${f.id}" style="text-decoration:none;color:inherit">${K.av(f, 'lg')}<span>${esc(f.name)}</span></a>`).join('')}</div>
@@ -50,7 +50,7 @@
         <button id="out"><span class="grow">התנתקות</span></button>
         <button id="reset"><span class="grow">איפוס ההדגמה</span></button>
         <button id="del" style="color:#B3261E"><span class="grow"><b>מחיקת החשבון</b></span></button>
-      </div>`);
+      </div>`, { nav: 'profile' });
     K.wireBack('');
     K.on('#inv', 'click', () => K.shareWA(K.inviteText('plain')));
     const saveBd = () => { const d = document.getElementById('bd-d').value, m = document.getElementById('bd-m').value; if (d && m) { A().updateMe({ birthday: `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` }); K.toast('נשמר 🎂'); } };

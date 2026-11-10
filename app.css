@@ -421,3 +421,7 @@ body.t-hotpink .muted { color: var(--ink); opacity: .8; }
 .sheet-x { position: absolute; top: 12px; left: 12px; width: 40px; height: 40px; border-radius: 12px; border: var(--b); background: var(--white); display: flex; align-items: center; justify-content: center; padding: 0; color: var(--ink); z-index: 1; }
 .sheet > h2:first-of-type, .sheet > .row:first-of-type { padding-left: 48px; }
 .story-prev { max-height: 46dvh; }
+
+/* English kicker lines sit on the Hebrew side, readable size */
+.wcard .k { display: block; text-align: right; font-size: 15px; letter-spacing: 0; margin-bottom: 2px; }
+.kicker { font-size: 16px; }
