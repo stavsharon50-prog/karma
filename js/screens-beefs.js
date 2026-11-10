@@ -217,7 +217,7 @@
       <div class="col center" style="gap:6px">${K.av(f, 'lg')}<b>על ${esc(f.name)}</b><span class="micro muted">${K.timeAgo(b.createdAt)}</span></div>
       <div class="sticker center"><span class="big-reason">${esc(b.reason)}</span><span style="align-self:center">${K.chilis(b.spice)}</span></div>
       ${body}
-      <div class="stack-bottom">${b.status !== 'pending' ? `<button class="btn ghost" id="rel">שחררתי 🕊</button>` : ''}</div>`);
+      ${b.status === 'open' ? `<div class="card cream flat row" style="margin-top:12px"><span style="flex:1" class="small muted">כבר לא אכפת לך? אפשר לסגור בלי כלום.</span><button class="link micro" id="rel">שחררתי 🕊</button></div>` : ''}`);
     K.wireBack('accounts');
     K.on('#ok', 'click', async () => { await A().respondGesture(id, true); K.go('closed/' + id); });
     K.on('#no', 'click', async () => { await A().respondGesture(id, false); K.toast(`שלחנו ל${f.name} שזה לא מספיק 😤`); K.routeNow(); });
