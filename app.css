@@ -504,3 +504,39 @@ h3.sub { font-family: var(--body); font-size: 14px; font-weight: 700; color: var
 .btn.login.dark { border-color: var(--ink); }
 .def { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
 .def b { white-space: nowrap; }
+
+/* ───────── bold look, like the first designs (PDF) ───────── */
+:root { --line: 2px solid var(--ink); }
+h1, .h1 { font-size: 30px; }
+h2, .h2 { font-size: 20px; }
+.card { background: var(--white); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.card.flat { box-shadow: none; }
+.card.peach, .card.pink, .card.lime, .card.lav, .card.cream { background: var(--white); }
+.card.hero { border-width: 2.5px; box-shadow: 5px 5px 0 var(--ink); }
+.card.hero.peach { background: var(--peach); } .card.hero.pink { background: var(--pink); } .card.hero.lime { background: var(--lime); } .card.hero.lav { background: var(--lavender); }
+.home-hero { gap: 12px; padding: 18px; }
+.home-hero .k { font-family: var(--display); font-weight: 900; font-size: 15px; text-align: right; display: block; }
+.home-hero .counter { font-size: 92px; line-height: .8; }
+.home-hero h2 { font-size: 22px; }
+.home-hero .mini { border: 2px solid var(--ink); border-radius: 14px; padding: 10px; gap: 2px; }
+.home-hero .mini b { font-size: 13px; }
+.home-hero .mini span { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn.md.dark { background: var(--ink); color: var(--cream); box-shadow: none; }
+.beef, .gift-card, .prod, .opt, .kpi, .list, .vs .side, .spice, .chip, .input, textarea.input, .icon-btn, .step { border: 2px solid var(--ink); }
+.beef { box-shadow: 3px 3px 0 var(--ink); align-items: flex-start; padding: 12px; }
+.beef .body { gap: 3px; }
+.beef .nm { font-family: var(--display); font-weight: 700; font-size: 16px; }
+.beef .reason { font-weight: 400; font-size: 14px; white-space: normal; }
+.kind-s { font-size: 13px; }
+.gift-card, .prod { box-shadow: none; }
+.icon-btn { box-shadow: 3px 3px 0 var(--ink); }
+.chip[aria-pressed="true"] { background: var(--pink); }
+.prod[aria-pressed="true"], .opt[aria-pressed="true"] { background: var(--lime); box-shadow: 3px 3px 0 var(--ink); }
+.btn.md.white, .btn.white.md { border: 2px solid var(--ink); box-shadow: none; }
+.tab { border: 2px solid var(--ink); font-weight: 600; }
+.pill { border: 1.5px solid var(--ink); }
+.pill.pink { background: var(--pink-soft); } .pill.lime { background: var(--lime); } .pill.peach { background: var(--peach); }
+.av { border-width: 2px; }
+.step .n { font-size: 18px; }
+.btn.login { box-shadow: var(--sh-m); border: var(--b-bold); font-family: var(--display); font-weight: 900; font-size: 17px; }
+.wcard .t1 { color: var(--grey); }

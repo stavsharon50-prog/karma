@@ -23,6 +23,15 @@
     { id: 'luck', emoji: '🍀', name: 'בהצלחה' },
     { id: 'bday', emoji: '🎂', name: 'יום הולדת שמח' },
   ];
+  // Sample causes for "donate in someone's name" (real nonprofits are signed up later).
+  const CAUSES = [
+    { id: 'food', emoji: '🍞', name: 'סל מזון למשפחות', org: 'עמותה לדוגמה' },
+    { id: 'dogs', emoji: '🐶', name: 'אימוץ כלבים', org: 'עמותה לדוגמה' },
+    { id: 'books', emoji: '📚', name: 'ספרים לילדים', org: 'עמותה לדוגמה' },
+    { id: 'trees', emoji: '🌳', name: 'נטיעת עצים', org: 'עמותה לדוגמה' },
+    { id: 'kids', emoji: '🎈', name: 'יום כיף לילדים בבית חולים', org: 'עמותה לדוגמה' },
+  ];
+  const DONATION_AMOUNTS = [18, 36, 50, 100];
   const BET_CATS = [
     { id: 'sport', emoji: '⚽', name: 'ספורט' }, { id: 'tv', emoji: '📺', name: 'ריאליטי' },
     { id: 'life', emoji: '💍', name: 'חיים' }, { id: 'dare', emoji: '🔥', name: 'אתגר' }, { id: 'other', emoji: '🎲', name: 'אחר' },
@@ -77,7 +86,7 @@
       k3: { id: 'k3', from: 'f-noy', to: 'me', occasion: 'thanks', message: 'על ההסעה בשתיים בלילה 🚗', giftId: 'g3', createdAt: ago(20 * D), deliverAt: ago(20 * D), thanked: true },
       k4: { id: 'k4', from: 'f-shira', to: 'me', occasion: 'miss', message: 'ראיתי מם וחשבתי עלייך', giftId: null, createdAt: ago(4 * H), deliverAt: ago(4 * H), thanked: false },
       k5: { id: 'k5', from: 'me', to: 'f-itai', occasion: 'thanks', message: 'על המעבר דירה. גב של ברזל.', giftId: null, createdAt: ago(8 * D), deliverAt: ago(8 * D), thanked: false },
-      k6: { id: 'k6', from: 'f-dani', to: 'me', occasion: 'congrats', message: 'על העבודה החדשה!!', giftId: null, createdAt: ago(10 * D), deliverAt: ago(10 * D), thanked: true },
+      k6: { id: 'k6', from: 'f-dani', to: 'me', occasion: 'congrats', message: 'על העבודה החדשה!!', giftId: null, donation: { cause: 'dogs', amount: 36 }, createdAt: ago(10 * D), deliverAt: ago(10 * D), thanked: true },
     };
     const bet = (o) => Object.assign({ claims: {}, giftId: null, remindedAt: null }, o);
     const bets = {
@@ -98,7 +107,7 @@
       n('n7', 'closed', 'תיק סגור ✓', 'איתי סגר את החשבון בקפה ☕', 'closed/b5', ago(3 * D), true),
     ];
     return {
-      v: 3, signedIn: false, onboarded: false, invite: null, tipSeen: false, bdayAsked: false,
+      v: 4, signedIn: false, onboarded: false, invite: null, tipSeen: false, bdayAsked: false,
       me: { id: 'me', name: 'אור', email: 'or@gmail.com', color: 'pink', joined: ago(200 * D), pronoun: null, birthday: null, likes: {}, notif: { digest: '18:00', quiet: true } },
       friends, businesses, gifts: BETS ? gifts : (delete gifts.g5, gifts), beefs, karma, bets: BETS ? bets : {}, notifs, events: [], sales: synthSales(),
     };
@@ -145,10 +154,10 @@
 
   const api = {
     demo: true,
-    GESTURES, PRESETS, OCCASIONS, BET_CATS, BIZ_TYPES,
+    GESTURES, PRESETS, OCCASIONS, BET_CATS, BIZ_TYPES, CAUSES, DONATION_AMOUNTS,
     async init() {
       try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
-      if (!S || S.v !== 3) { S = seed(); save(); }
+      if (!S || S.v !== 4) { S = seed(); save(); }
       save();
     },
     log(name, props) { if (!S) return; S.events.push({ name, props, at: Date.now() }); if (S.events.length > 300) S.events.splice(0, 100); save(); },
@@ -365,7 +374,7 @@
     // ── good karma ──
     karmaItem(id) {
       const k = S.karma[id]; if (!k) return null;
-      return Object.assign({}, k, { fromP: who(k.from), toP: who(k.to), friend: who(other(k)), occ: OCCASIONS.find((o) => o.id === k.occasion), gift: k.giftId ? decorateGift(S.gifts[k.giftId]) : null });
+      return Object.assign({}, k, { fromP: who(k.from), toP: who(k.to), friend: who(other(k)), occ: OCCASIONS.find((o) => o.id === k.occasion), cause: k.donation ? CAUSES.find((c) => c.id === k.donation.cause) : null, gift: k.giftId ? decorateGift(S.gifts[k.giftId]) : null });
     },
     karmaList() {
       const now = new Date();
@@ -373,10 +382,10 @@
       return { got: all.filter((k) => k.to === 'me' && new Date(k.deliverAt) <= now), sent: all.filter((k) => k.from === 'me') };
     },
     seeKarma(id) { if (S.karma[id]) { S.karma[id].seen = true; save(); } },
-    async sendKarma({ to, occasion, message, productId, onBirthday }) {
+    async sendKarma({ to, occasion, message, productId, onBirthday, donation }) {
       if (message) { const cat = window.KarmaModeration && window.KarmaModeration.check(message); if (cat) throw new Error('moderation:' + cat); }
       const deliverAt = onBirthday ? K.nextBirthdayMidnight(S.friends[to].birthday).toISOString() : new Date().toISOString();
-      const k = { id: uid('k'), from: 'me', to, occasion, message: message || '', giftId: null, createdAt: new Date().toISOString(), deliverAt, thanked: false };
+      const k = { id: uid('k'), from: 'me', to, occasion, message: message || '', giftId: null, donation: donation || null, createdAt: new Date().toISOString(), deliverAt, thanked: false };
       if (productId) k.giftId = makeGift('me', to, productId, 'karma', k.id).id;
       S.karma[k.id] = k; api.log('karma_sent', { occasion, gift: !!productId, scheduled: !!onBirthday }); changed();
       const f = S.friends[to];
