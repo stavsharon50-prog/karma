@@ -20,22 +20,17 @@
     const inv = K.api.invite();
     if (inv && inv.kind) return invited(inv);
     K.render(`
-      <div class="col center" style="gap:6px;margin-top:8px">${K.logo('xl')}<p class="h2" style="margin:6px 0 0">הכול חוזר.</p></div>
+      <div class="col center" style="gap:6px;margin-top:8px">${K.logo('xl')}<p class="h2" style="margin:6px 0 0">הכול חוזר.</p><p class="muted" style="margin:4px 0 0">ביפים וגוד קארמה בין חברים.</p></div>
       <div class="col" style="gap:14px;margin:6px 0">
         <div class="card peach wcard" style="transform:rotate(1.5deg)">
           <div class="head">${K.av({ name: 'מאיה', color: 'pink' })}<div class="body"><div class="k">You've been KARMAd 😈</div><b>מאיה פתחה איתך ביף</b><div class="small">על: אכלת לי את הצ׳יפס</div></div>${K.chilis(2)}</div>
 </div>
         <div class="card pink wcard" style="transform:rotate(-1.5deg)">
-          <div class="head">${K.av({ name: 'נוי', color: 'lime' })}<div class="body"><div class="k">You've been KARMAd 😇</div><b>נוי שלחה לך גוד קארמה</b><div class="small">סתם כי התגעגעתי · ומתנה: קפה</div></div><span style="font-size:26px"></span></div>
+          <div class="head">${K.av({ name: 'נוי', color: 'lime' })}<div class="body"><div class="k">You've been KARMAd 😇</div><b>נוי שלחה לך גוד קארמה</b><div class="small">סתם כי התגעגעתי · ומתנה: קפה</div></div><span style="font-size:26px">☕</span></div>
 </div>
-</div>
-      <div class="col" style="gap:6px">
-        <div class="def"><span>😈</span><span><b>ביף</b> · כשמישהו חייב לך משהו קטן. הוא סוגר בסליחה או בקפה.</span></div>
-        <div class="def"><span>😇</span><span><b>גוד קארמה</b> · כשבא לך לפרגן למישהו. עם מתנה קטנה או בלי.</span></div>
 </div>
       <div class="stack-bottom">
         ${googleBtn()}
-        <p class="small center" style="margin:0"> רק חברים שאישרת יכולים לשלוח לך ביף או גוד קארמה.</p>
         ${fine}
         <details class="micro muted center"><summary>הדגמה: איך זה נראה כשמזמינים אותך?</summary>
           <div class="row" style="justify-content:center;margin-top:8px;flex-wrap:wrap">

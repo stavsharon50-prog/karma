@@ -86,7 +86,7 @@
       k3: { id: 'k3', from: 'f-noy', to: 'me', occasion: 'thanks', message: 'על ההסעה בשתיים בלילה', giftId: 'g3', createdAt: ago(20 * D), deliverAt: ago(20 * D), thanked: true },
       k4: { id: 'k4', from: 'f-shira', to: 'me', occasion: 'miss', message: 'ראיתי מם וחשבתי עלייך', giftId: null, createdAt: ago(4 * H), deliverAt: ago(4 * H), thanked: false },
       k5: { id: 'k5', from: 'me', to: 'f-itai', occasion: 'thanks', message: 'על המעבר דירה. גב של ברזל.', giftId: null, createdAt: ago(8 * D), deliverAt: ago(8 * D), thanked: false },
-      k6: { id: 'k6', from: 'f-dani', to: 'me', occasion: 'congrats', message: 'על העבודה החדשה!!', giftId: null, donation: { cause: 'dogs', amount: 36 }, createdAt: ago(10 * D), deliverAt: ago(10 * D), thanked: true },
+      k6: { id: 'k6', from: 'f-dani', to: 'me', occasion: 'congrats', message: 'על העבודה החדשה!!', giftId: null, createdAt: ago(10 * D), deliverAt: ago(10 * D), thanked: true },
     };
     const bet = (o) => Object.assign({ claims: {}, giftId: null, remindedAt: null }, o);
     const bets = {
@@ -374,6 +374,8 @@
     // ── good karma ──
     karmaItem(id) {
       const k = S.karma[id]; if (!k) return null;
+      const cz = k.donation ? CAUSES.find((c) => c.id === k.donation.cause) : null;
+      if (k.to === 'cause') return Object.assign({}, k, { fromP: S.me, toP: null, friend: { id: 'cause', name: cz.name, color: 'lav' }, occ: { id: 'donate', name: 'תרומה', emoji: '' }, cause: cz, gift: null, isDonation: true });
       return Object.assign({}, k, { fromP: who(k.from), toP: who(k.to), friend: who(other(k)), occ: OCCASIONS.find((o) => o.id === k.occasion), cause: k.donation ? CAUSES.find((c) => c.id === k.donation.cause) : null, gift: k.giftId ? decorateGift(S.gifts[k.giftId]) : null });
     },
     karmaList() {
@@ -390,6 +392,13 @@
       S.karma[k.id] = k; api.log('karma_sent', { occasion, gift: !!productId, scheduled: !!onBirthday }); changed();
       const f = S.friends[to];
       if (!onBirthday && f && !f.invited) later(8000, () => { S.karma[k.id].thanked = true; notify('thanks', `${f.name} ${K.G(f.p, 'שלחה', 'שלח')} תודה`, 'על הגוד קארמה ששלחת', 'karma/' + k.id); });
+      return api.karmaItem(k.id);
+    },
+    // Good karma straight to a nonprofit (instead of to a friend).
+    async donate({ cause, amount, note }) {
+      if (note) { const cat = window.KarmaModeration && window.KarmaModeration.check(note); if (cat) throw new Error('moderation:' + cat); }
+      const k = { id: uid('k'), from: 'me', to: 'cause', occasion: 'donate', message: note || '', giftId: null, donation: { cause, amount }, createdAt: new Date().toISOString(), deliverAt: new Date().toISOString(), thanked: true };
+      S.karma[k.id] = k; api.log('donation', { cause, amount }); changed();
       return api.karmaItem(k.id);
     },
     async thank(id) { S.karma[id].thanked = true; S.karma[id].thankedByMe = true; api.log('thanks_sent', {}); changed(); },
