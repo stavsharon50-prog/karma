@@ -26,7 +26,7 @@
       ${tip}${plainSuggest}
       ${nothing ? `<div class="card cream center col" style="padding:28px 18px"><div style="font-size:44px">😈😇</div><h2>עוד אין כאן אף אחד</h2><p class="muted" style="margin:0">ביף אחד בוואטסאפ, וזה מתחיל.</p>
           <a class="btn md" href="#/new-beef">לפתוח ביף 😈</a><a class="btn md pink" href="#/new-karma">לשלוח גוד קארמה 😇</a></div>` : ''}
-      ${h.waiting.length ? `<section class="col"><h2>מחכה לך</h2>${h.waiting.map(waitCard).join('')}</section>`
+      ${h.waiting.length ? `${heroCard(h.waiting[0])}${h.waiting.length > 1 ? `<section class="col"><h3 class="sub">עוד מחכה לך · ${h.waiting.length - 1}</h3><div class="list rows">${h.waiting.slice(1).map(rowCard).join('')}</div></section>` : ''}`
         : !nothing ? `<div class="card lime row"><span style="font-size:28px">✨</span><b>הכול סגור. קארמה נקייה.</b></div>` : ''}
       ${reminder}
       ${nothing ? '' : `<div class="grid2">
@@ -37,6 +37,24 @@
     K.on('#tip', 'click', () => { A().setTipSeen(); K.routeNow(); });
     wireWaiting();
   });
+
+  // The single most urgent thing gets the color and the big button; everything else is a quiet row.
+  function heroCard(w) {
+    return waitCard(w).replace(/class="card (\w+) wcard"/, 'class="card hero $1 wcard"').replace(/btn md/g, 'btn');
+  }
+  function rowCard(w) {
+    const x = w.item, f = x.friend;
+    const map = {
+      beef: ['😈', `${f.name}: ${x.reason}`, `#/beef/${x.id}`],
+      gesture: ['🙏', `${f.name} ${K.gv(f, 'ביקשה', 'ביקש')} סליחה`, `#/mine/${x.id}`],
+      wantmore: ['😤', `${f.name} ${K.gv(f, 'רוצה', 'רוצה')} יותר`, `#/beef/${x.id}`],
+      karma: ['😇', `${f.name}: ${x.occ ? x.occ.name : ''}`, `#/karma/${x.id}`],
+      challenge: ['🥊', `${f.name} ${K.gv(f, 'זרקה', 'זרק')} לך כפפה`, `#/bet/${x.id}`],
+      owe: ['😅', `${f.name} ${K.gv(f, 'מחכה', 'מחכה')} ל${x.product ? x.product.name : ''}`, `#/bet/${x.id}`],
+      claim: ['⏱', 'מי ניצח?', `#/bet/${x.id}`],
+    }[w.type];
+    return `<a href="${map[2]}">${K.av(f, 'sm')}<span class="grow"><span class="row-t">${esc(map[1])}</span><br><span class="micro muted">${K.timeAgo(w.at || x.createdAt)}</span></span><span class="kind ${w.type === 'karma' ? 'good' : 'bad'}">${map[0]}</span></a>`;
+  }
 
   function waitCard(w) {
     const x = w.item, f = x.friend;
@@ -63,7 +81,7 @@
         <div class="acts"><a class="btn md lime" href="#/bet/${x.id}">לשלוח ${x.product.emoji} · ${K.money(x.product.price)}</a></div></div>`;
       case 'claim': return `<div class="card lime wcard"><a href="#/bet/${x.id}" style="text-decoration:none;color:inherit">${head('', 'נגמר הזמן ⏱ מי ניצח?')}</a><div class="small">${esc(x.topic)}</div></div>`;
       case 'karma': return `<a class="card pink wcard" href="#/karma/${x.id}" style="text-decoration:none">
-        ${head("You've been KARMAd 😇", `${esc(f.name)}: ${x.occ.name} ${x.occ.emoji}`, x.gift ? `<span style="font-size:26px">🎁</span>` : '')}</a>`;
+        ${head("You've been KARMAd 😇", `${esc(f.name)}: ${x.occ.name} ${x.occ.emoji}`, x.gift ? `<span style="font-size:26px">🎁</span>` : '')}<div class="acts"><span class="btn md white">לפתוח 💌</span></div></a>`;
     }
     return '';
   }
